@@ -38,7 +38,7 @@ public:
 	/**
 	 * Contructs a unique_function instance from a function pointer
 	 */
-	unique_function(R (*f)(Args...)) : _ptr(f), _isSmall(true) {
+	unique_function(R (*f)(Args...)) : _ptr((void *)f), _isSmall(true) {
 		using F = R (*)(Args...);
 		_tid = &typeid(F);
 		_invoke = [](void *f, Args &&...args) {
