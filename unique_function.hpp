@@ -121,8 +121,9 @@ public:
 	/**
 	 * Contructs a unique_function instance from a generic callable object
 	 */
-	template <class F>
-	constexpr unique_function(F &&f) : _isSmall(sizeof(f) < 9) {
+	template <class F, typename = std::enable_if_t<!std::is_same<
+						   std::decay_t<F>, unique_function>::value>>
+	unique_function(F &&f) : _isSmall(sizeof(f) <= sizeof(_mem)) {
 		using _Raw = std::remove_reference_t<F>;
 		_tid = &typeid(_Raw);
 		if (_isSmall) new (_mem) _Raw(std::forward<_Raw>(f));
