@@ -2,13 +2,22 @@
 #include <unique_function.hpp>
 
 struct F {
+	bool _moved = false;
+	// char _dummy[8];
 	F() = default;
 	F(const F &) = delete;
-	F(F &&) {}
-	int operator()() const { return 0; }
-	~F() { std::cout << "Destroyed\n"; }
+	F(F &&other) { other._moved = true; }
+	int operator()() const { return 10; }
+	~F() {
+		if (!_moved) std::cout << "Destroyed\n";
+	}
 };
 
+int f() {
+	return 10;
+}
+
 int main(int argc, char const *argv[]) {
-	_FuncState s([x = 1]() { return 0; });
+	unique_function<int()> func([x = F{}] { return x(); });
+	std::cout << func() << '\n';
 }
