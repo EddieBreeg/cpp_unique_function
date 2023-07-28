@@ -52,14 +52,13 @@ public:
 			return ((F)f)(forward<Args>(args)...);
 		};
 	}
+	function_ref(const function_ref &) = default;
 	/** Constructs the reference from a generic callable object */
-	template <class Func> function_ref(Func &&f) {
+	template <class Func, std::enable_if_t<
+							  !std::is_same_v<std::decay_t<Func>, function_ref>,
+							  bool> = true>
+	function_ref(Func &&f) {
 		using _Raw_t = std::remove_reference_t<Func>;
-		// the copy constructor never gets called, we have to do the copy here
-		if (std::is_same_v<_Raw_t, function_ref>) {
-			*this = std::move(f);
-			return;
-		}
 		_ptr = &f;
 		_type_info = []() -> const std::type_info & { return typeid(_Raw_t); };
 		_invoke = [](void *f, Args &&...args) {
