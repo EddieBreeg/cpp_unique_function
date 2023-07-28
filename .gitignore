@@ -1,8 +1,5 @@
-*
-!CMakeLists.txt
-!.clang-format
-!main.cpp
-!unique_function.hpp
-!README.md
-!LICENSE*
-!.gitignore
+build/
+bin/
+*.exe
+*.lib
+.vscode/

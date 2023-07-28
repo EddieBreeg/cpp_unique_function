@@ -38,7 +38,7 @@ public:
 	/**
 	 * Contructs a unique_function instance from a function pointer
 	 */
-	unique_function(R (*f)(Args...)) : _isSmall(true), _ptr(f) {
+	unique_function(R (*f)(Args...)) : _ptr(f), _isSmall(true) {
 		using F = R (*)(Args...);
 		_tid = &typeid(F);
 		_invoke = [](void *f, Args &&...args) {
@@ -148,10 +148,10 @@ private:
 		void *_ptr = nullptr;
 		char _mem[sizeof(_ptr)];
 	};
-	bool _isSmall = false;
 	void (*_deleter)(void *ptr) = nullptr;
 	R (*_invoke)(void *, Args &&...) = nullptr;
 	const std::type_info *_tid = nullptr;
+	bool _isSmall = false;
 };
 
 #endif // UNIQUE_FN_H
