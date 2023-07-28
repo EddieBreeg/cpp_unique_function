@@ -17,3 +17,4 @@ AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 KeepEmptyLinesAtTheStartOfBlocks: false
 AlwaysBreakTemplateDeclarations: MultiLine
 BreakAfterAttributes: Always
+SortIncludes: Never
