@@ -30,6 +30,51 @@ struct invalid_function_access {
  */
 template <class Func> class unique_function;
 
+template <class Func> class function_ref;
+
+template <class R, typename... Args> class function_ref<R(Args...)> {
+public:
+	function_ref() = default;
+	function_ref(R (*f)(Args...)) : _ptr((void *)f) {
+		using F = decltype(f);
+		_type_info = []() -> const std::type_info & {
+			return typeid(R(Args...));
+		};
+		_invoke = [](void *f, Args &&...args) {
+			return ((F)f)(forward<Args>(args)...);
+		};
+	}
+	template <class Func> function_ref(Func &&f) {
+		using _Raw_t = std::remove_reference_t<Func>;
+		// the copy constructor never gets called, we have to do the copy here
+		if (std::is_same_v<_Raw_t, function_ref>) {
+			*this = std::move(f);
+			return;
+		}
+		_ptr = &f;
+		_type_info = []() -> const std::type_info & { return typeid(_Raw_t); };
+		_invoke = [](void *f, Args &&...args) {
+			return (*(_Raw_t *)f)(forward<Args>(args)...);
+		};
+	}
+	const std::type_info &target_type() const noexcept { return _type_info(); }
+	template <class T> T *target() noexcept {
+		return typeid(T) == _type_info() ? (T *)_ptr : nullptr;
+	}
+
+	R operator()(Args &&...args) {
+		if (!_ptr) throw invalid_function_access{};
+		return _invoke(_ptr, forward<Args>(args)...);
+	}
+
+private:
+	void *_ptr = nullptr;
+	R (*_invoke)(void *, Args &&...) = nullptr;
+	const std::type_info &(*_type_info)() = []() -> const std::type_info & {
+		return typeid(void);
+	};
+};
+
 template <class R, typename... Args> class unique_function<R(Args...)> {
 public:
 	/* Default constructor: constructs an invalid function object */
@@ -40,7 +85,7 @@ public:
 	 */
 	unique_function(R (*f)(Args...)) : _ptr((void *)f), _isSmall(true) {
 		using F = R (*)(Args...);
-		_tid = &typeid(F);
+		_tid = &typeid(R(Args...));
 		_invoke = [](void *f, Args &&...args) {
 			return (*(F *)f)(forward<Args>(args)...);
 		};
@@ -73,7 +118,8 @@ public:
 		_ptr(other._ptr),
 		_isSmall(other._isSmall),
 		_deleter(other._deleter),
-		_invoke(other._invoke) {
+		_invoke(other._invoke),
+		_tid(other._tid) {
 		other.reset();
 	}
 	/**
@@ -117,9 +163,7 @@ public:
 	 * @return typeid(T) if the stored function has type T, otherwise
 	 * typeid(void)
 	 */
-	const std::type_info &target_type() const noexcept {
-		return _tid ? *_tid : typeid(void);
-	}
+	const std::type_info &target_type() const noexcept { return *_tid; }
 	/**
 	 * @returns A pointer to the stored function if target_type() == typeid(T),
 	 * otherwise a null pointer.
@@ -143,6 +187,7 @@ private:
 		_invoke = nullptr;
 		_deleter = nullptr;
 		_ptr = nullptr;
+		_tid = &typeid(void);
 	}
 	union {
 		void *_ptr = nullptr;
@@ -150,7 +195,7 @@ private:
 	};
 	void (*_deleter)(void *ptr) = nullptr;
 	R (*_invoke)(void *, Args &&...) = nullptr;
-	const std::type_info *_tid = nullptr;
+	const std::type_info *_tid = &typeid(void);
 	bool _isSmall = false;
 };
 

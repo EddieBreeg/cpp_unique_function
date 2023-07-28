@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unique_function.hpp>
+#include <cassert>
 
 struct F {
 	bool _moved = false;
@@ -13,22 +14,45 @@ struct F {
 	}
 };
 
-F foo() {
-	F res{};
-	res._val = 10;
-	return res;
+int foo() {
+	return 2;
 }
 
-unique_function<F()> make_func() {
-	return [f = F{}]() mutable {
-		f._val = 11;
-		return std::move(f);
-	};
+void function_ref_tests() {
+	function_ref<int()> f1;
+	assert(f1.target_type() == typeid(void));
+	f1 = foo;
+	assert(f1.target_type() == typeid(foo));
+	auto f2 = f1;
+	assert(f2.target_type() == typeid(foo));
+	assert(f2() == 2 && f1() == 2);
+
+	f1 = F{};
+	assert(f1() == F{}());
+	f2 = [x = F{}]() { return 42; };
+	assert(f2() == 42);
+}
+void unique_function_tests() {
+	unique_function<int()> f1;
+	assert(f1.target_type() == typeid(void));
+	f1 = foo;
+	assert(f1.target_type() == typeid(foo));
+	auto f2 = std::move(f1);
+	assert(f1.target_type() == typeid(void));
+	assert(!f1);
+	assert(f2.target_type() == typeid(foo));
+	assert(f2() == foo());
+	f1 = std::move(f2);
+	assert(f2.target_type() == typeid(void));
+	assert(!f2);
+
+	f1 = F{};
+	assert(f1() == F{}());
+	f2 = [x = F{}]() { return 42; };
+	assert(f2() == 42);
 }
 
 int main(int argc, char const *argv[]) {
-	unique_function<F()> f = foo;
-	f = make_func();
-	F x = f();
-	std::cout << x._val << '\n';
+	function_ref_tests();
+	unique_function_tests();
 }
