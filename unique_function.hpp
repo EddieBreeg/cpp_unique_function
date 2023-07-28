@@ -234,4 +234,17 @@ private:
 	bool _isSmall = false;
 };
 
+template <class F> struct invoke_result;
+
+template <class R, typename... Args>
+struct invoke_result<unique_function<R(Args...)>> {
+	using type = R;
+};
+template <class R, typename... Args>
+struct invoke_result<function_ref<R(Args...)>> {
+	using type = R;
+};
+
+template <class F> using invoke_result_t = typename invoke_result<F>::type;
+
 #endif // UNIQUE_FN_H
