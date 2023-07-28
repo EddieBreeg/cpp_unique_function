@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unique_function.hpp>
 #include <cassert>
+#include <functional>
 
 struct F {
 	bool _moved = false;
@@ -14,6 +15,9 @@ struct F {
 
 int foo() {
 	return 2;
+}
+int bar(int x) {
+	return x;
 }
 
 void function_ref_tests() {
@@ -54,8 +58,13 @@ void unique_function_tests() {
 	assert(ref.target_type() == typeid(F));
 	assert(ref() == F{}());
 }
+void bind_tests() {
+	unique_function<int()> b = std::bind(bar, 1);
+	assert(b() == 1);
+}
 
 int main(int argc, char const *argv[]) {
 	function_ref_tests();
 	unique_function_tests();
+	bind_tests();
 }
