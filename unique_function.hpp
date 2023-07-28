@@ -211,7 +211,6 @@ public:
 	 * Destroys the function object
 	 */
 	~unique_function() {
-		if (!_deleter) return;
 		if (_isSmall) _deleter(_mem);
 		else _deleter(_ptr);
 	}
@@ -219,16 +218,16 @@ public:
 private:
 	inline void reset() noexcept {
 		_isSmall = false;
-		_invoke = nullptr;
-		_deleter = nullptr;
+		_deleter = [](void *) {};
 		_ptr = nullptr;
+		_invoke = nullptr;
 		_tid = &typeid(void);
 	}
 	union {
 		void *_ptr = nullptr;
 		char _mem[sizeof(void *)];
 	};
-	void (*_deleter)(void *ptr) = nullptr;
+	void (*_deleter)(void *ptr) = [](void *) {};
 	R (*_invoke)(void *, Args &&...) = nullptr;
 	const std::type_info *_tid = &typeid(void);
 	bool _isSmall = false;
