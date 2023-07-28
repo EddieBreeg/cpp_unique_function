@@ -5,6 +5,9 @@
 `unique_function` is a generic type that allows you to represent a callable object with a given signature.
 Thanks to the magic of type erasure, the underlying callable target can be anything, which is very useful in a lot of cases, like when working with concurrency.
 
+This library also provides the `function_ref` class, a lighter type which only 
+references the target callable object, and thus doesn't manage its lifetime at all.
+
 ## Why?
 
 I can already hear you argue that the C++ standard already has a similar class: `std::function`.
