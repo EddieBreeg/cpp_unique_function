@@ -9,9 +9,7 @@ struct F {
 	F(const F &) = delete;
 	F(F &&other) : _val(other._val) { other._moved = true; }
 	int operator()() const { return 10; }
-	~F() {
-		if (!_moved) std::cout << "Destroyed\n";
-	}
+	~F() {}
 };
 
 int foo() {
@@ -50,6 +48,11 @@ void unique_function_tests() {
 	assert(f1() == F{}());
 	f2 = [x = F{}]() { return 42; };
 	assert(f2() == 42);
+
+	auto ref = f1.get_ref<F>();
+	assert(ref);
+	assert(ref.target_type() == typeid(F));
+	assert(ref() == F{}());
 }
 
 int main(int argc, char const *argv[]) {

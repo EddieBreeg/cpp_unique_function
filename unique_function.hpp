@@ -30,11 +30,19 @@ struct invalid_function_access {
  */
 template <class Func> class unique_function;
 
+/**
+ * Represents a reference to a generic callable object
+ * @tparam Func: The underlying function type
+ * @warning If the referenced object reaches its end of life before the
+ * reference, the reference will become dangling
+ */
 template <class Func> class function_ref;
 
 template <class R, typename... Args> class function_ref<R(Args...)> {
 public:
+	/** Constructs an empty function_ref */
 	function_ref() = default;
+	/** Constructs the reference from a function pointer */
 	function_ref(R (*f)(Args...)) : _ptr((void *)f) {
 		using F = decltype(f);
 		_type_info = []() -> const std::type_info & {
@@ -44,6 +52,7 @@ public:
 			return ((F)f)(forward<Args>(args)...);
 		};
 	}
+	/** Constructs the reference from a generic callable object */
 	template <class Func> function_ref(Func &&f) {
 		using _Raw_t = std::remove_reference_t<Func>;
 		// the copy constructor never gets called, we have to do the copy here
@@ -57,15 +66,34 @@ public:
 			return (*(_Raw_t *)f)(forward<Args>(args)...);
 		};
 	}
+	/**
+	 * @return typeid(T) if the target function has type T, otherwise
+	 * typeid(void)
+	 */
 	const std::type_info &target_type() const noexcept { return _type_info(); }
+	/**
+	 * @return The pointer to the target object if target_type() == typeid(T),
+	 * otherwise nullptr
+	 */
 	template <class T> T *target() noexcept {
 		return typeid(T) == _type_info() ? (T *)_ptr : nullptr;
 	}
 
+	/**
+	 * Attempts to invoke the function
+	 * @param args: The arguments to forward to the underlying callable object
+	 * @throw Throws invalid_function_access if *this does not contain a valid
+	 * callable object, that is if has_value() returns false
+	 */
 	R operator()(Args &&...args) {
 		if (!_ptr) throw invalid_function_access{};
 		return _invoke(_ptr, forward<Args>(args)...);
 	}
+
+	/** @return true if *this is not empty, false otherwise */
+	inline constexpr bool has_value() const noexcept { return (bool)_ptr; }
+	/** @return true if *this is not empty, false otherwise */
+	inline constexpr operator bool() const noexcept { return has_value(); }
 
 private:
 	void *_ptr = nullptr;
@@ -171,6 +199,14 @@ public:
 	template <class T> T *target() noexcept {
 		if (*_tid != typeid(T)) return nullptr;
 		return _isSmall ? (T *)_mem : (T *)_ptr;
+	}
+	/** Returns a reference to the stored function object
+	 * @return A reference to the stored callable object if target_type() == T,
+	 * otherwise an empty reference
+	 */
+	template <class T> function_ref<R(Args...)> get_ref() {
+		if (*_tid != typeid(T)) return {};
+		return *target<T>();
 	}
 	/**
 	 * Destroys the function object
