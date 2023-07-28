@@ -54,9 +54,9 @@ public:
 	}
 	function_ref(const function_ref &) = default;
 	/** Constructs the reference from a generic callable object */
-	template <class Func, std::enable_if_t<
-							  !std::is_same_v<std::decay_t<Func>, function_ref>,
-							  bool> = true>
+	template <class Func,
+			  typename = std::enable_if_t<
+				  !std::is_same<std::decay_t<Func>, function_ref>::value, bool>>
 	function_ref(Func &&f) {
 		using _Raw_t = std::remove_reference_t<Func>;
 		_ptr = &f;
@@ -127,7 +127,7 @@ public:
 		_tid = &typeid(_Raw);
 		if (_isSmall) new (_mem) _Raw(std::forward<_Raw>(f));
 		else _ptr = new _Raw(std::forward<_Raw>(f));
-		if (_isSmall && !std::is_trivially_constructible_v<_Raw>)
+		if (_isSmall && !std::is_trivially_constructible<_Raw>::value)
 			_deleter = [](void *ptr) { ((_Raw *)ptr)->~_Raw(); };
 		else _deleter = [](void *ptr) { delete (_Raw *)ptr; };
 		_invoke = [](void *f, Args &&...args) {
@@ -226,7 +226,7 @@ private:
 	}
 	union {
 		void *_ptr = nullptr;
-		char _mem[sizeof(_ptr)];
+		char _mem[sizeof(void *)];
 	};
 	void (*_deleter)(void *ptr) = nullptr;
 	R (*_invoke)(void *, Args &&...) = nullptr;
