@@ -24,7 +24,7 @@ template <class R, typename... Args> class unique_function<R(Args...)> {
 public:
 	constexpr unique_function() noexcept = default;
 	template <class F>
-	explicit constexpr unique_function(F &&f) : _isSmall(sizeof(f) < 9) {
+	constexpr unique_function(F &&f) : _isSmall(sizeof(f) < 9) {
 		using _Raw = std::remove_reference_t<F>;
 		if (_isSmall) new (_mem) _Raw(std::forward<_Raw>(f));
 		else _ptr = new _Raw(std::forward<_Raw>(f));
@@ -35,7 +35,7 @@ public:
 			return (*(_Raw *)f)(forward<Args>(args)...);
 		};
 	}
-	explicit unique_function(R (*f)(Args...)) : _isSmall(true), _ptr(f) {
+	unique_function(R (*f)(Args...)) : _isSmall(true), _ptr(f) {
 		using F = R (*)(Args...);
 		_invoke = [](void *f, Args &&...args) {
 			return (*(F *)f)(forward<Args>(args)...);
