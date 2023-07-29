@@ -41,9 +41,9 @@ template <class Func> class function_ref;
 template <class R, typename... Args> class function_ref<R(Args...)> {
 public:
 	/** Constructs an empty function_ref */
-	function_ref() = default;
+	constexpr function_ref() noexcept = default;
 	/** Constructs the reference from a function pointer */
-	function_ref(R (*f)(Args...)) : _ptr((void *)f) {
+	function_ref(R (*f)(Args...)) noexcept : _ptr((void *)f) {
 		using F = decltype(f);
 		_type_info = []() -> const std::type_info & {
 			return typeid(R(Args...));
@@ -57,7 +57,7 @@ public:
 	template <class Func,
 			  typename = std::enable_if_t<
 				  !std::is_same<std::decay_t<Func>, function_ref>::value, bool>>
-	function_ref(Func &&f) {
+	function_ref(Func &&f) noexcept {
 		using _Raw_t = std::remove_reference_t<Func>;
 		_ptr = &f;
 		_type_info = []() -> const std::type_info & { return typeid(_Raw_t); };
@@ -69,12 +69,17 @@ public:
 	 * @return typeid(T) if the target function has type T, otherwise
 	 * typeid(void)
 	 */
-	const std::type_info &target_type() const noexcept { return _type_info(); }
+	[[nodiscard]]
+	const std::type_info &target_type() const noexcept {
+		return _type_info();
+	}
 	/**
 	 * @return The pointer to the target object if target_type() == typeid(T),
 	 * otherwise nullptr
 	 */
-	template <class T> T *target() noexcept {
+	template <class T>
+	[[nodiscard]]
+	T *target() noexcept {
 		return typeid(T) == _type_info() ? (T *)_ptr : nullptr;
 	}
 
@@ -90,9 +95,14 @@ public:
 	}
 
 	/** @return true if *this is not empty, false otherwise */
-	inline constexpr bool has_value() const noexcept { return (bool)_ptr; }
+	[[nodiscard]]
+	inline constexpr bool has_value() const noexcept {
+		return (bool)_ptr;
+	}
 	/** @return true if *this is not empty, false otherwise */
-	inline constexpr operator bool() const noexcept { return has_value(); }
+	[[nodiscard]] inline constexpr operator bool() const noexcept {
+		return has_value();
+	}
 
 private:
 	void *_ptr = nullptr;
@@ -110,7 +120,8 @@ public:
 	/**
 	 * Contructs a unique_function instance from a function pointer
 	 */
-	unique_function(R (*f)(Args...)) : _ptr((void *)f), _isSmall(true) {
+	unique_function(R (*f)(Args...)) noexcept :
+		_ptr((void *)f), _isSmall(true) {
 		using F = R (*)(Args...);
 		_tid = &typeid(R(Args...));
 		_invoke = [](void *f, Args &&...args) {
@@ -142,7 +153,7 @@ public:
 	 * @param other: The object to move from. This object is left in an invalid
 	 * state, such that a call to has_value() returns false
 	 */
-	constexpr unique_function(unique_function &&other) noexcept :
+	unique_function(unique_function &&other) noexcept :
 		_ptr(other._ptr),
 		_isSmall(other._isSmall),
 		_deleter(other._deleter),
@@ -154,18 +165,23 @@ public:
 	 * Indicates whether *this is a valid function object
 	 * @returns true if *this contains a valid callable object, false otherwise
 	 */
-	constexpr bool has_value() const noexcept { return (bool)_invoke; }
+	[[nodiscard]]
+	constexpr bool has_value() const noexcept {
+		return (bool)_invoke;
+	}
 	/**
 	 * Casts *this to a boolean
 	 * @return Same as has_value()
 	 */
-	constexpr operator bool() const noexcept { return has_value(); }
+	[[nodiscard]] constexpr operator bool() const noexcept {
+		return has_value();
+	}
 
 	/**
 	 * Swaps the contents of *this with other
 	 * @param other: The other function object to swap the contents with
 	 */
-	void swap(unique_function &other) {
+	void swap(unique_function &other) noexcept {
 		std::swap(_ptr, other._ptr);
 		std::swap(_invoke, other._invoke);
 		std::swap(_deleter, other._deleter);
@@ -173,7 +189,7 @@ public:
 		std::swap(_tid, other._tid);
 	}
 	unique_function &operator=(unique_function &) = delete;
-	unique_function &operator=(unique_function &&other) {
+	unique_function &operator=(unique_function &&other) noexcept {
 		swap(other);
 		return *this;
 	}
@@ -191,12 +207,17 @@ public:
 	 * @return typeid(T) if the stored function has type T, otherwise
 	 * typeid(void)
 	 */
-	const std::type_info &target_type() const noexcept { return *_tid; }
+	[[nodiscard]]
+	const std::type_info &target_type() const noexcept {
+		return *_tid;
+	}
 	/**
 	 * @returns A pointer to the stored function if target_type() == typeid(T),
 	 * otherwise a null pointer.
 	 */
-	template <class T> T *target() noexcept {
+	template <class T>
+	[[nodiscard]]
+	T *target() noexcept {
 		if (*_tid != typeid(T)) return nullptr;
 		return _isSmall ? (T *)_mem : (T *)_ptr;
 	}
@@ -204,7 +225,9 @@ public:
 	 * @return A reference to the stored callable object if target_type() == T,
 	 * otherwise an empty reference
 	 */
-	template <class T> function_ref<R(Args...)> get_ref() {
+	template <class T>
+	[[nodiscard]]
+	function_ref<R(Args...)> get_ref() {
 		if (*_tid != typeid(T)) return {};
 		return *target<T>();
 	}
