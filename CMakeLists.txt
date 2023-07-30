@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(libstra VERSION 0.0.1)
+project(libstra VERSION 0.1.0)
 
 
 set(CMAKE_CXX_STANDARD 14)
@@ -30,6 +30,7 @@ target_link_libraries(utils_tests PRIVATE libstra)
 add_test(NAME UniqueFuntion COMMAND unique_function_test)
 add_test(NAME Storage COMMAND storage_test)
 add_test(NAME Utility COMMAND utils_tests)
+
     
 endif(${BUILD_TESTS})
 
