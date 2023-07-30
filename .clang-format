@@ -15,6 +15,6 @@ Cpp11BracedListStyle: false
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 KeepEmptyLinesAtTheStartOfBlocks: false
-AlwaysBreakTemplateDeclarations: MultiLine
+AlwaysBreakTemplateDeclarations: true
 BreakAfterAttributes: Always
 SortIncludes: Never

@@ -1,5 +1,5 @@
+#include <libstra/unique_function.hpp>
 #include <iostream>
-#include <unique_function.hpp>
 #include <cassert>
 #include <functional>
 
@@ -21,6 +21,7 @@ int bar(int x) {
 }
 
 void function_ref_tests() {
+	using libstra::function_ref;
 	function_ref<int()> f1;
 	assert(f1.target_type() == typeid(void));
 	f1 = foo;
@@ -35,6 +36,8 @@ void function_ref_tests() {
 	assert(f2() == 42);
 }
 void unique_function_tests() {
+	using libstra::function_ref;
+	using libstra::unique_function;
 	unique_function<int()> f1;
 	assert(f1.target_type() == typeid(void));
 	f1 = foo;
@@ -59,6 +62,7 @@ void unique_function_tests() {
 	assert(ref() == F{}());
 }
 void bind_tests() {
+	using libstra::unique_function;
 	unique_function<int()> b = std::bind(bar, 1);
 	assert(b() == 1);
 }

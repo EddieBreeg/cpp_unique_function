@@ -1,23 +1,32 @@
 cmake_minimum_required(VERSION 3.0)
-project(unique_function VERSION 0.2.1)
+project(libstra VERSION 0.0.1)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_library(libstra INTERFACE)
+target_include_directories(libstra INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 option(BUILD_TESTS "Builds the test program" ON)
 
-add_library(unique_function INTERFACE)
-target_include_directories(unique_function INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-
 if(${BUILD_TESTS})
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-add_executable(main main.cpp)
-target_link_libraries(main PRIVATE unique_function)
-
 include(CTest)
 enable_testing()
-add_test(NAME Tests COMMAND main)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+
+add_executable(unique_function_test tests/unique_function.cpp)
+target_link_libraries(unique_function_test PRIVATE libstra)
+
+add_executable(storage_test tests/storage.cpp)
+target_compile_features(storage_test PRIVATE cxx_std_17)
+target_link_libraries(storage_test PRIVATE libstra)
+
+add_executable(expected_test tests/expected.cpp)
+target_link_libraries(expected_test PRIVATE libstra)
+
+add_test(NAME UniqueFuntion COMMAND unique_function_test)
+add_test(NAME Storage COMMAND storage_test)
+add_test(NAME Expected COMMAND expected_test)
     
 endif(${BUILD_TESTS})
 
