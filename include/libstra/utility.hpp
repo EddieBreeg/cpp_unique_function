@@ -10,12 +10,12 @@ namespace libstra {
 
 	template <class T>
 	[[nodiscard]]
-	constexpr T &&forward(std::remove_reference_t<T> &&t) noexcept {
+	constexpr T &&forward(std::decay_t<T> &&t) noexcept {
 		return (T &&)t;
 	}
 	template <class T>
 	[[nodiscard]]
-	constexpr T &&forward(std::remove_reference_t<T> &t) noexcept {
+	constexpr T &&forward(std::decay_t<T> &t) noexcept {
 		return (T &&)t;
 	}
 	constexpr void forward() noexcept {}
@@ -55,7 +55,7 @@ namespace libstra {
 
 	template <class F, class Tuple, size_t... I>
 	constexpr decltype(auto) apply(index_sequence<I...>, F &&f, Tuple &&args) {
-		return (std::forward<F>(f))(std::get<I>(std::forward<Tuple>(args))...);
+		return f(std::get<I>(std::forward<Tuple>(args))...);
 	}
 	template <class F, class Tuple>
 	constexpr decltype(auto) apply(F &&f, Tuple &&args) {
