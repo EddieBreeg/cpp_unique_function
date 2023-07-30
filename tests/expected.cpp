@@ -12,10 +12,10 @@ constexpr bool operator==(const dummy_error &, const dummy_error &) {
 }
 
 void unexpected_eq_test() {
-	constexpr libstra::unexpected<dummy_error> err(libstra::in_place_t{});
+	constexpr libstra::unexpected<dummy_error> err(std::in_place_t{});
 	static_assert(err.error() == dummy_error{},
 				  "unexpected equality tests failed");
-	constexpr libstra::unexpected<dummy_error> err2(libstra::in_place_t{});
+	constexpr libstra::unexpected<dummy_error> err2(std::in_place_t{});
 	static_assert(err == err2, "unexpected equality tests failed");
 }
 void unexpected_swap_tests() {
