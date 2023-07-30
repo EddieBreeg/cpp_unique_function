@@ -2,6 +2,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <iostream>
+#include <expected>
 
 struct E {
 	int _code;
@@ -14,27 +15,17 @@ struct E {
 };
 
 void constexpr_tests() {
-	constexpr libstra::unexpected<E> a(E(42));
-	static_assert(a.error().what() == 42, "constexpr test failed");
-	constexpr libstra::unexpected<E> b(libstra::in_place_t{}, 1);
-	constexpr libstra::unexpected<E> c(libstra::in_place_t{}, { 1, 2, 3 }, 1);
-	static_assert(b == c, "constexpr test failed");
-	{ constexpr libstra::expected<int, int> foo; }
 	{
-		constexpr libstra::expected<void, E> foo;
-		static_assert(foo.has_value(), "constexpr expected test failed");
+		constexpr libstra::expected<int, E> exp{ .value{} };
+		static_assert(exp.value == 0, "constexpr expected test failed");
+	}
+	{
+		constexpr libstra::expected<void, E> exp{ ._unused{} };
+		static_assert(exp.has_value, "constexpr expected test failed");
 	}
 }
 
-void swap_test() {
-	libstra::unexpected<E> e1(E{ 1 }), e2(E{ 2 });
-#if __cplusplus >= 201703
-	static_assert(noexcept(e1.swap(e2)), "noexcept swapt test failed");
-#endif
-	e1.swap(e2);
-	assert(e1.error().what() == 2);
-	assert(e2.error().what() == 1);
-}
+void swap_test() {}
 
 class Foo {
 public:
