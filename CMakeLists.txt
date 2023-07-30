@@ -38,3 +38,9 @@ add_test(NAME Utility COMMAND utils_tests)
     
 endif(${BUILD_TESTS})
 
+option(INSTALL "Activates library installation" ON)
+
+if(${INSTALL})
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/libstra DESTINATION include)
+    install(FILES LibstraConfig.cmake DESTINATION cmake)
+endif(${INSTALL})
