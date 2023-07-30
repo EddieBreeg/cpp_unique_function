@@ -23,15 +23,16 @@ struct C {
 void constexpr_tests() {
 	constexpr libstra::storage<int> s = 1;
 	constexpr auto s2 = s;
-	static_assert(*s2 == 1);
-	static_assert(s == s2);
+	static_assert(*s2 == 1, "constexpt test failed");
+	static_assert(s == s2, "constexpt test failed");
 	constexpr libstra::storage<C> s3(libstra::in_place_t{}, { 1, 2 }, "foobar");
 }
 
 int main() {
 	constexpr_tests();
 	libstra::storage<A> s1;
-	static_assert(std::is_trivially_destructible<decltype(s1)>::value);
+	static_assert(std::is_trivially_destructible<decltype(s1)>::value,
+				  "constexpt test failed");
 	s1 = A(1);
 	decltype(s1) s2 = 2;
 #if __cplusplus >= 201703

@@ -64,5 +64,66 @@ namespace libstra {
 			return _err == other._err;
 		}
 	};
+	template <class T, class E, bool TriviallyDestructible>
+	struct _expected_base;
+
+	template <class T, class E>
+	struct _expected_base<T, E, false> {
+		union {
+			T _val{};
+			E _err;
+		};
+		bool _has_val = true;
+		~_expected_base() {
+			if (_has_val) _val.~T();
+			else _err.~E();
+		}
+	};
+	template <class T, class E>
+	struct _expected_base<T, E, true> {
+		union {
+			T _val{};
+			E _err;
+		};
+		bool _has_val = true;
+	};
+	template <class E>
+	struct _expected_base<void, E, true> {
+		union {
+			char _val{};
+			E _err;
+		};
+		bool _has_val = true;
+	};
+	template <class E>
+	struct _expected_base<void, E, false> {
+		union {
+			char _val{};
+			E _err;
+		};
+		bool _has_val = true;
+		~_expected_base() {
+			if (!_has_val) _err.~E();
+		}
+	};
+
+	template <class T, class E>
+	class [[nodiscard]] expected {
+	private:
+		using base_type =
+			_expected_base<T, E,
+						   (std::is_trivially_destructible<T>::value ||
+							std::is_void<T>::value) &&
+							   (std::is_trivially_destructible<E>::value)>;
+		base_type _b;
+
+	public:
+		constexpr expected() : _b{ {} } {}
+
+		[[nodiscard]]
+		constexpr bool has_value() const noexcept {
+			return _b._has_val;
+		}
+	};
 
 } // namespace libstra

@@ -28,9 +28,13 @@ add_executable(expected_test tests/expected.cpp)
 # target_compile_features(expected_test PRIVATE cxx_std_14)
 target_link_libraries(expected_test PRIVATE libstra)
 
+add_executable(utils_tests tests/utils.cpp)
+target_link_libraries(utils_tests PRIVATE libstra)
+
 add_test(NAME UniqueFuntion COMMAND unique_function_test)
 add_test(NAME Storage COMMAND storage_test)
 add_test(NAME Expected COMMAND expected_test)
+add_test(NAME Utility COMMAND utils_tests)
     
 endif(${BUILD_TESTS})
 
