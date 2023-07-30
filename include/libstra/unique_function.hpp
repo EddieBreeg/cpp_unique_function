@@ -136,13 +136,13 @@ namespace libstra {
 		unique_function(F &&f) : _isSmall(sizeof(f) <= sizeof(_mem)) {
 			using _Raw = std::remove_reference_t<F>;
 			_tid = &typeid(_Raw);
-			if (_isSmall) new (_mem) _Raw(std::forward<_Raw>(f));
-			else _ptr = new _Raw(std::forward<_Raw>(f));
+			if (_isSmall) new (_mem) _Raw(libstra::forward<_Raw>(f));
+			else _ptr = new _Raw(libstra::forward<_Raw>(f));
 			if (_isSmall && !std::is_trivially_constructible<_Raw>::value)
 				_deleter = [](void *ptr) { ((_Raw *)ptr)->~_Raw(); };
 			else _deleter = [](void *ptr) { delete (_Raw *)ptr; };
 			_invoke = [](void *f, Args &&...args) {
-				return (*(_Raw *)f)(forward<Args>(args)...);
+				return (*(_Raw *)f)(libstra::forward<Args>(args)...);
 			};
 		}
 		unique_function(const unique_function &) = delete;

@@ -7,12 +7,14 @@ namespace libstra {
 	struct nullopt_t {};
 
 	template <class T>
-	T &&forward(std::remove_reference_t<T> &&t) noexcept {
+	[[nodiscard]]
+	constexpr T &&forward(std::remove_reference_t<T> &&t) noexcept {
 		return (T &&)t;
 	}
 	template <class T>
-	T &&forward(std::remove_reference_t<T> &t) noexcept {
+	[[nodiscard]]
+	constexpr T &&forward(std::remove_reference_t<T> &t) noexcept {
 		return (T &&)t;
 	}
-	void forward() noexcept {}
+	constexpr void forward() noexcept {}
 } // namespace libstra

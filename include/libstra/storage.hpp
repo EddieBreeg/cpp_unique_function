@@ -22,14 +22,15 @@ namespace libstra {
 		_storage_base(T &&x) noexcept : _val(std::move(x)) {}
 
 		template <class U>
-		_storage_base(U &&other) : _val(std::forward<U>(other)) {}
+		_storage_base(U &&other) : _val(forward<U>(other)) {}
 
 		template <typename... Args>
 		_storage_base(in_place_t, Args &&...args) :
-			_val(std::forward<Args>(args)...) {}
+			_val(forward<Args>(args)...) {}
+
 		template <class U, typename... Args>
 		_storage_base(in_place_t, std::initializer_list<U> il, Args &&...args) :
-			_val(il, std::forward<Args>(args)...) {}
+			_val(il, forward<Args>(args)...) {}
 
 		~_storage_base() { _val.~T(); }
 	};
@@ -42,14 +43,14 @@ namespace libstra {
 		constexpr _storage_base(T &&x) noexcept : _val(std::move(x)) {}
 
 		template <class U>
-		constexpr _storage_base(U &&other) : _val(std::forward<U>(other)) {}
+		constexpr _storage_base(U &&other) : _val(forward<U>(other)) {}
 		template <typename... Args>
 		constexpr _storage_base(in_place_t, Args &&...args) :
-			_val(std::forward<Args>(args)...) {}
+			_val(forward<Args>(args)...) {}
 		template <class U, typename... Args>
 		constexpr _storage_base(in_place_t, std::initializer_list<U> il,
 								Args &&...args) :
-			_val(il, std::forward<Args>(args)...) {}
+			_val(il, forward<Args>(args)...) {}
 	};
 
 	template <class T>
@@ -63,20 +64,20 @@ namespace libstra {
 
 		template <class U, typename = std::enable_if_t<!std::is_same<
 							   std::decay_t<U>, storage<T>>::value>>
-		constexpr storage(U &&other) : _b(std::forward<U>(other)) {}
+		constexpr storage(U &&other) : _b(forward<U>(other)) {}
 
 		template <typename... Args>
 		constexpr explicit storage(in_place_t, Args &&...args) :
-			_b(in_place_t{}, std::forward<Args>(args)...) {}
+			_b(in_place_t{}, forward<Args>(args)...) {}
 		template <class U, typename... Args>
 		constexpr explicit storage(in_place_t, std::initializer_list<U> il,
 								   Args &&...args) :
-			_b(in_place_t{}, il, std::forward<Args>(args)...) {}
+			_b(in_place_t{}, il, forward<Args>(args)...) {}
 
 		template <class U, typename = std::enable_if_t<!std::is_same<
 							   std::decay_t<U>, storage<T>>::value>>
 		constexpr storage &operator=(U &&other) {
-			_b._val = std::forward<U>(other);
+			_b._val = forward<U>(other);
 			return *this;
 		}
 		constexpr storage &operator=(const storage &other) {
@@ -132,5 +133,9 @@ namespace libstra {
 	}
 
 } // namespace libstra
+
+#ifdef _CPP_17
+#undef _CPP_17
+#endif
 
 #endif

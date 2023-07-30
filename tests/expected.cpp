@@ -4,26 +4,32 @@
 #include <iostream>
 
 struct dummy_error {
-	constexpr dummy_error() noexcept {}
+	constexpr dummy_error() = default;
 	const char *what() const noexcept { return "Dummy Error"; }
+};
+struct error2 {
+	const char *_msg = nullptr;
+	constexpr error2(const char *str) noexcept : _msg(str) {}
+	constexpr error2(std::initializer_list<int>, const char *str) noexcept :
+		_msg(str) {}
+	constexpr const char *what() const noexcept { return _msg; }
+	constexpr bool operator==(const error2 &other) const {
+		return _msg == other._msg;
+	}
 };
 constexpr bool operator==(const dummy_error &, const dummy_error &) {
 	return true;
 }
 
-// void unexpected_eq_test() {
-// 	constexpr libstra::unexpected<dummy_error> err(std::in_place_t{});
-// 	static_assert(err.error() == dummy_error{},
-// 				  "unexpected equality tests failed");
-// 	constexpr libstra::unexpected<dummy_error> err2(std::in_place_t{});
-// 	static_assert(err == err2, "unexpected equality tests failed");
-// }
-// void unexpected_swap_tests() {
-// 	libstra::unexpected<int> err1 = 0, err2 = 1;
-// 	static_assert(noexcept(err1.swap(err2)), "noexcept swap test failed");
-// 	err1.swap(err2);
-// 	assert(err1.error() == 1 && err2.error() == 0);
-// }
+void constexpr_tests() {
+	constexpr libstra::unexpected<dummy_error> x{ dummy_error{} };
+	static_assert(error2{ "Msg" }.what() == "Msg");
+	constexpr libstra::unexpected<error2> y(libstra::in_place_t{},
+											(const char *)"foobar");
+	constexpr decltype(y) z(libstra::in_place_t{}, { 1, 2 }, "foobar");
+	static_assert(z.error().what() == "foobar");
+	static_assert(y == z);
+}
 
 class Foo {
 public:
@@ -32,12 +38,6 @@ public:
 	~Foo() = default;
 };
 
-void expected_eq_tests() {
-	// constexpr libstra::expected<Foo, dummy_error> x;
-}
-
 int main(int argc, char const *argv[]) {
-	// unexpected_eq_test();
-	// unexpected_swap_tests();
-	// expected_eq_tests();
+	constexpr_tests();
 }
