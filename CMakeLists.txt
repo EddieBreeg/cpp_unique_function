@@ -25,7 +25,7 @@ add_executable(unique_function_test tests/unique_function.cpp)
 target_link_libraries(unique_function_test PRIVATE libstra)
 
 add_executable(storage_test tests/storage.cpp)
-target_compile_features(storage_test PRIVATE cxx_std_17)
+target_compile_features(storage_test PRIVATE cxx_std_14)
 target_link_libraries(storage_test PRIVATE libstra)
 
 add_executable(expected_test tests/expected.cpp)

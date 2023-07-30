@@ -7,9 +7,7 @@
 
 #include <utility>
 #include <type_traits>
-#ifdef _CPP_17
-#include <optional>
-#endif
+#include <libstra/utility.hpp>
 
 namespace libstra {
 	template <class T, bool TrivalDestructor>
@@ -26,15 +24,12 @@ namespace libstra {
 		template <class U>
 		_storage_base(U &&other) : _val(std::forward<U>(other)) {}
 
-#ifdef _CPP_17
 		template <typename... Args>
-		_storage_base(std::in_place_t, Args &&...args) :
+		_storage_base(in_place_t, Args &&...args) :
 			_val(std::forward<Args>(args)...) {}
 		template <class U, typename... Args>
-		_storage_base(std::in_place_t, std::initializer_list<U> il,
-					  Args &&...args) :
+		_storage_base(in_place_t, std::initializer_list<U> il, Args &&...args) :
 			_val(il, std::forward<Args>(args)...) {}
-#endif
 
 		~_storage_base() { _val.~T(); }
 	};
@@ -48,15 +43,13 @@ namespace libstra {
 
 		template <class U>
 		constexpr _storage_base(U &&other) : _val(std::forward<U>(other)) {}
-#ifdef _CPP_17
 		template <typename... Args>
-		constexpr _storage_base(std::in_place_t, Args &&...args) :
+		constexpr _storage_base(in_place_t, Args &&...args) :
 			_val(std::forward<Args>(args)...) {}
 		template <class U, typename... Args>
-		constexpr _storage_base(std::in_place_t, std::initializer_list<U> il,
+		constexpr _storage_base(in_place_t, std::initializer_list<U> il,
 								Args &&...args) :
 			_val(il, std::forward<Args>(args)...) {}
-#endif
 	};
 
 	template <class T>
@@ -72,15 +65,14 @@ namespace libstra {
 							   std::decay_t<U>, storage<T>>::value>>
 		constexpr storage(U &&other) : _b(std::forward<U>(other)) {}
 
-#ifdef _CPP_17
 		template <typename... Args>
-		constexpr storage(std::in_place_t, Args &&...args) :
-			_b(std::in_place_t{}, std::forward<Args>(args)...) {}
+		constexpr explicit storage(in_place_t, Args &&...args) :
+			_b(in_place_t{}, std::forward<Args>(args)...) {}
 		template <class U, typename... Args>
-		constexpr storage(std::in_place_t, std::initializer_list<U> il,
-						  Args &&...args) :
-			_b(std::in_place_t{}, il, std::forward<Args>(args)...) {}
-#endif
+		constexpr explicit storage(in_place_t, std::initializer_list<U> il,
+								   Args &&...args) :
+			_b(in_place_t{}, il, std::forward<Args>(args)...) {}
+
 		template <class U, typename = std::enable_if_t<!std::is_same<
 							   std::decay_t<U>, storage<T>>::value>>
 		constexpr storage &operator=(U &&other) {
@@ -115,8 +107,9 @@ namespace libstra {
 		}
 
 #ifdef _CPP_17
+		template <class U = T>
 		constexpr void
-		swap(storage &other) noexcept(std::is_nothrow_swappable_v<T>) {
+		swap(storage &other) noexcept(std::is_nothrow_swappable_with_v<T, U>) {
 			std::swap(**this, *other);
 		}
 #else

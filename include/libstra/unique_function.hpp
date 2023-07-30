@@ -4,19 +4,9 @@
 #include <type_traits>
 #include <utility>
 #include <typeinfo>
+#include <libstra/utility.hpp>
 
 namespace libstra {
-	template <class T>
-	constexpr T &&forward(std::remove_reference_t<T> &t) noexcept {
-		return static_cast<T &&>(t);
-	}
-	template <class T>
-	constexpr T &&forward(std::remove_reference_t<T> &&t) noexcept {
-		return static_cast<T &&>(t);
-	}
-	// required in case we need to forward an empty argument pack
-	constexpr void forward() noexcept {}
-
 	// Exception thrown when the call operator is used on an invalid
 	// unique_function object
 	struct invalid_function_access {
