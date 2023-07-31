@@ -19,6 +19,11 @@ int main() {
 	libstra::thread_pool tp(3);
 	auto res1 = tp.enqueue_task<int>(f, A{ 42 });
 	assert(res1.get() == 42);
+	auto g = [](int &x) { x = 666; };
+	int x = 1;
+	auto res2 = tp.enqueue_task<void>(g, x);
+	res2.wait();
+	assert(x == 666); // surprisingly, this works
 
 	tp.stop();
 }
