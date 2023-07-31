@@ -16,7 +16,7 @@ struct B {
 };
 struct C {
 	constexpr C(int, const char *) {}
-	constexpr C(std::initializer_list<int>, const char *) {}
+	constexpr C(std::initializer_list<int>, nullptr_t) {}
 	~C() = default;
 };
 
@@ -25,7 +25,7 @@ void constexpr_tests() {
 	constexpr auto s2 = s;
 	static_assert(*s2 == 1, "constexpt test failed");
 	static_assert(s == s2, "constexpt test failed");
-	constexpr libstra::storage<C> s3(libstra::in_place_t{}, { 1, 2 }, "foobar");
+	constexpr libstra::storage<C> s3(libstra::in_place_t{}, { 1, 2 }, nullptr);
 }
 
 int main() {
