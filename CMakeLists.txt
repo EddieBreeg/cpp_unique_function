@@ -11,9 +11,11 @@ if(${MSVC})
     add_compile_options(-Wall)
 endif(${MSVC})
 
+file(GLOB LIBSTRA_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
-add_library(libstra INTERFACE)
-target_include_directories(libstra INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+add_library(libstra STATIC ${LIBSTRA_SRC})
+target_include_directories(libstra PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 option(BUILD_TESTS "Builds the test program" ON)
 
@@ -33,9 +35,13 @@ target_link_libraries(storage_test PRIVATE libstra)
 add_executable(utils_tests tests/utils.cpp)
 target_link_libraries(utils_tests PRIVATE libstra)
 
+add_executable(thread_pool_tests tests/thread_pool.cpp)
+target_link_libraries(thread_pool_tests PRIVATE libstra)
+
 add_test(NAME UniqueFuntion COMMAND unique_function_test)
 add_test(NAME Storage COMMAND storage_test)
 add_test(NAME Utility COMMAND utils_tests)
+add_test(NAME ThreadPool COMMAND thread_pool_tests)
 
     
 endif(${BUILD_TESTS})
@@ -43,6 +49,7 @@ endif(${BUILD_TESTS})
 option(INSTALL "Activates library installation" ON)
 
 if(${INSTALL})
+    install(TARGETS libstra DESTINATION lib)
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/libstra DESTINATION include)
-    install(FILES LibstraConfig.cmake DESTINATION cmake)
+    install(FILES LibstraConfig.cmake DESTINATION lib/cmake)
 endif(${INSTALL})
