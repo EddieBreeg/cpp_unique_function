@@ -38,10 +38,14 @@ target_link_libraries(utils_tests PRIVATE libstra)
 add_executable(thread_pool_tests tests/thread_pool.cpp)
 target_link_libraries(thread_pool_tests PRIVATE libstra)
 
+add_executable(latch_tests tests/latch.cpp)
+target_link_libraries(latch_tests PRIVATE libstra)
+
 add_test(NAME UniqueFuntion COMMAND unique_function_test)
 add_test(NAME Storage COMMAND storage_test)
 add_test(NAME Utility COMMAND utils_tests)
 add_test(NAME ThreadPool COMMAND thread_pool_tests)
+add_test(NAME Latch COMMAND latch_tests)
 
     
 endif(${BUILD_TESTS})

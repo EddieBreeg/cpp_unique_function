@@ -1,6 +1,9 @@
 build/
 bin/
+lib/
 *.exe
 *.lib
 .vscode/
 install/
+*.a
+*.lib
