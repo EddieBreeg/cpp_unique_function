@@ -11,6 +11,18 @@ struct A {
 	A(A &&other) : _val(other._val) { other._moved = true; }
 };
 
+struct B {
+	static int moves, copies;
+	bool _moved = false;
+	B() = default;
+	B(const B &) { ++copies; }
+	B(B &&other) {
+		++moves;
+		other._moved = true;
+	}
+};
+int B::copies = 0, B::moves = 0;
+
 int f(A x) {
 	return x._val;
 }
@@ -23,7 +35,13 @@ int main() {
 	int x = 1;
 	auto res2 = tp.enqueue_task<void>(g, x);
 	res2.wait();
-	assert(x == 666); // surprisingly, this works
+	assert(x == 666);
+	B b;
+	auto res3 = tp.enqueue_task<void>([](B x) {}, b);
+	res3.wait();
+	assert(!b._moved);
+	std::cout << B::copies << '\n';
+	std::cout << B::moves << '\n';
 
 	tp.stop();
 }
