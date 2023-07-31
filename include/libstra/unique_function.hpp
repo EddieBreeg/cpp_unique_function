@@ -154,10 +154,10 @@ namespace libstra {
 		 */
 		unique_function(unique_function &&other) noexcept :
 			_ptr(other._ptr),
-			_isSmall(other._isSmall),
 			_deleter(other._deleter),
 			_invoke(other._invoke),
-			_tid(other._tid) {
+			_tid(other._tid),
+			_isSmall(other._isSmall) {
 			other.reset();
 		}
 		/**
