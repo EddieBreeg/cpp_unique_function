@@ -10,12 +10,12 @@ namespace libstra {
 
 	template <class T>
 	[[nodiscard]]
-	constexpr T &&forward(std::decay_t<T> &&t) noexcept {
+	constexpr T &&forward(std::remove_reference_t<T> &&t) noexcept {
 		return (T &&)t;
 	}
 	template <class T>
 	[[nodiscard]]
-	constexpr T &&forward(std::decay_t<T> &t) noexcept {
+	constexpr T &&forward(std::remove_reference_t<T> &t) noexcept {
 		return (T &&)t;
 	}
 	constexpr void forward() noexcept {}
