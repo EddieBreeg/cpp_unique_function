@@ -140,4 +140,14 @@ namespace libstra {
 		return !(a == b);
 	}
 
+	/**
+	 * An alias type which communicates explicitly the pointer
+	 * owns the memory it points to. It is the responsibility
+	 * of whoever has the pointer to release the memory
+	 * @tparam T: The (possibly cv-qualified) type of object the pointer points
+	 * to
+	 */
+	template <class T>
+	using owning_ptr = std::add_pointer_t<T>;
+
 } // namespace libstra
