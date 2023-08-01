@@ -79,6 +79,7 @@ namespace libstra {
 			_p = std::move(other._p);
 			return *this;
 		}
+		not_null_ptr &operator=(decltype(nullptr)) = delete;
 
 		[[nodiscard]]
 		constexpr auto &
