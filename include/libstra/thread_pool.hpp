@@ -48,7 +48,7 @@ namespace libstra {
 			{
 				std::lock_guard<std::mutex> lk(_mutex);
 				auto &&task = make_task<R>(std::move(p), forward<F>(f),
-										   forward<Args>(args)...);
+										   libstra::forward<Args>(args)...);
 				_tasks.emplace(std::move(task));
 				++_current_tasks;
 			}
@@ -82,7 +82,8 @@ namespace libstra {
 				  std::enable_if_t<!std::is_void<R>::value, int> = 0,
 				  typename... Args>
 		auto make_task(std::promise<R> &&p, F &&f, Args &&...args) {
-			std::tuple<Args...> t{ forward<Args>(args)... }; // store the values
+			std::tuple<std::decay_t<Args>...> t{ libstra::forward<Args>(
+				args)... }; // store the values
 			return [p = std::move(p), f = forward<F>(f),
 					args = std::move(t)]() mutable {
 				try {
@@ -96,7 +97,8 @@ namespace libstra {
 				  std::enable_if_t<std::is_void<R>::value, int> = 0,
 				  typename... Args>
 		auto make_task(std::promise<R> &&p, F &&f, Args &&...args) {
-			std::tuple<Args...> t{ forward<Args>(args)... }; // store the values
+			std::tuple<std::decay_t<Args>...> t{ libstra::forward<Args>(
+				args)... }; // store the values
 			return [p = std::move(p), f = forward<F>(f),
 					args = std::move(t)]() mutable {
 				try {

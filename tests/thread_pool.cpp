@@ -34,7 +34,7 @@ void test1() {
 	assert(res1.get() == 42);
 	auto g = [](int &x) { x = 666; };
 	int x = 1;
-	auto res2 = tp.enqueue_task<void>(g, x);
+	auto res2 = tp.enqueue_task<void>(g, std::ref(x));
 	res2.wait();
 	assert(x == 666);
 	B b;
