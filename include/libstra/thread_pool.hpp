@@ -39,6 +39,8 @@ namespace libstra {
 		 * @param Args: The arguments to pass to f
 		 * @returns A std::future object you can use to wait on the task,
 		 * and get its result or any exception that might have occurred
+		 * @note If the callable object takes arguments by reference, you
+		 * MUST wrap the references, using std::ref
 		 */
 		template <class R, class F, typename... Args>
 		[[nodiscard]]
