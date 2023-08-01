@@ -13,5 +13,4 @@ INCLUDE_DIRECTORIES ${CMAKE_CURRENT_LIST_DIR}/../../include
 )
 if(NOT DEFINED FIND_Libstra_QUIETLY)
 message("Found libstra at ${CMAKE_CURRENT_LIST_DIR}")    
-message("Imported libstra static lib from ${LIBSTRA_LIB_FILE}")
 endif(NOT DEFINED FIND_Libstra_QUIETLY)
