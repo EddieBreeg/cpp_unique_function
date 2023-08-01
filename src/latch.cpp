@@ -24,7 +24,7 @@ namespace libstra {
 			_cv.wait(lk, [this]() { return !this->_n; });
 		}
 	}
-	bool latch::try_wait() noexcept {
+	bool latch::try_wait() {
 		std::unique_lock<std::mutex> lk(_m);
 		return _n == 0;
 	}
