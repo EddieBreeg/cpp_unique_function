@@ -150,4 +150,13 @@ namespace libstra {
 	template <class T>
 	using owning_ptr = std::add_pointer_t<T>;
 
+	/**
+	 * An alias type which communicates explicitly the pointer
+	 * doesn't own the memory it points to
+	 * @tparam T: The (possibly cv-qualified) type of object the pointer points
+	 * to
+	 */
+	template <class T>
+	using non_owning_ptr = std::add_pointer_t<T>;
+
 } // namespace libstra
