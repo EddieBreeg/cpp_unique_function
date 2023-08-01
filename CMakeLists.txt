@@ -44,12 +44,16 @@ target_link_libraries(latch_tests PRIVATE libstra)
 add_executable(sem_tests tests/semaphore.cpp)
 target_link_libraries(sem_tests PRIVATE libstra)
 
+add_executable(memory_tests tests/memory.cpp)
+target_link_libraries(memory_tests PRIVATE libstra)
+
 add_test(NAME UniqueFuntion COMMAND unique_function_test)
 add_test(NAME Storage COMMAND storage_test)
 add_test(NAME Utility COMMAND utils_tests)
 add_test(NAME ThreadPool COMMAND thread_pool_tests)
 add_test(NAME Latch COMMAND latch_tests)
 add_test(NAME Semaphore COMMAND sem_tests)
+add_test(NAME Memory COMMAND memory_tests)
 
     
 endif(${BUILD_TESTS})
