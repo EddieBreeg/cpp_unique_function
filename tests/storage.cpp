@@ -6,6 +6,10 @@ struct A {
 	int x;
 	A() = delete;
 	constexpr A(int x) : x(x) {}
+	constexpr A &operator=(const A &other) noexcept {
+		x = other.x;
+		return *this;
+	}
 	~A() = default;
 };
 

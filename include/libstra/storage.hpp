@@ -109,8 +109,8 @@ namespace libstra {
 
 #ifdef _CPP_17
 		template <class U = T>
-		constexpr void
-		swap(storage &other) noexcept(std::is_nothrow_swappable_with_v<T, U>) {
+		constexpr void swap(storage &other) noexcept(
+			noexcept(std::is_nothrow_swappable_with_v<T, U>)) {
 			std::swap(**this, *other);
 		}
 #else

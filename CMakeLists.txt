@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.0)
 project(libstra VERSION 1.0.0)
 
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 if(${MSVC})
     add_compile_options(/Wall)
     else()    
@@ -13,14 +10,31 @@ endif(${MSVC})
 
 file(GLOB LIBSTRA_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
+set(CPP_STANDARD 14 CACHE STRING "The C++ standard to use")
+set_property(CACHE CPP_STANDARD PROPERTY STRINGS 14 17 20 23)
+
+set(CMAKE_CXX_STANDARD ${CPP_STANDARD})
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 add_library(libstra STATIC ${LIBSTRA_SRC})
+
+
+if(${MSVC})
+    target_compile_options(libstra PRIVATE /FI "libstra/internal/config.h")
+    else()
+    target_compile_options(libstra PRIVATE -include "libstra/internal/config.h")
+endif(${MSVC})
+
+
+target_compile_features(libstra PUBLIC cxx_std_14)
 target_include_directories(libstra PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-option(BUILD_TESTS "Builds the test program" ON)
 
-if(${BUILD_TESTS})
 include(CTest)
+
+if(${BUILD_TESTING})
 enable_testing()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
@@ -52,7 +66,7 @@ add_test(NAME Latch COMMAND latch_tests)
 add_test(NAME Semaphore COMMAND sem_tests)
 
     
-endif(${BUILD_TESTS})
+endif(${BUILD_TESTING})
 
 option(INSTALL "Activates library installation" ON)
 

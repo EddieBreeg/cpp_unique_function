@@ -89,7 +89,7 @@ namespace libstra {
 			return [p = std::move(p), f = forward<F>(f),
 					args = std::move(t)]() mutable {
 				try {
-					p.set_value(apply(std::move(f), std::move(args)));
+					p.set_value(libstra::apply(std::move(f), std::move(args)));
 				} catch (...) {
 					p.set_exception(std::current_exception());
 				}
@@ -104,7 +104,7 @@ namespace libstra {
 			return [p = std::move(p), f = forward<F>(f),
 					args = std::move(t)]() mutable {
 				try {
-					apply(std::move(f), std::move(args));
+					libstra::apply(std::move(f), std::move(args));
 					p.set_value();
 
 				} catch (...) {
