@@ -27,6 +27,9 @@ namespace libstra {
 		 */
 		~thread_pool();
 
+		thread_pool(thread_pool &) = delete;
+		thread_pool(thread_pool &&) = delete;
+
 		/**
 		 * Adds a new task to the queue
 		 * @tparam R: The type of object returned by the task

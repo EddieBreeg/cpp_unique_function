@@ -74,8 +74,24 @@ void test3() {
 		std::cout << e.what() << '\n';
 	}
 }
+void test4() {
+	using namespace std::chrono_literals;
+	libstra::thread_pool tp(1);
+	std::future<void> res;
+	auto tmp = tp.enqueue_task<void>([]() {
+		std::cout << "task a\n";
+		std::this_thread::sleep_for(100ms);
+	});
+	{
+		B b;
+		res = tp.enqueue_task<void>([](B x) { std::cout << "task b\n"; }, b);
+	}
+	tp.wait();
+	std::cout << B::copies << ' ' << B::moves << '\n';
+}
 int main() {
 	test1();
 	test2();
 	test3();
+	test4();
 }
