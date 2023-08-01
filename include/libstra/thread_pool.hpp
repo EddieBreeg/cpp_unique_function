@@ -9,14 +9,34 @@
 #include <libstra/utility.hpp>
 
 namespace libstra {
-
+	/**
+	 * Represents a pool of threads you can assign any kind of task to
+	 */
 	class thread_pool {
 	public:
+		/**
+		 * Constructs the pool with a fixed amount of threads
+		 * @param n: The number of threads to create. If 0,
+		 * the behaviour is undefined
+		 */
 		thread_pool(size_t n);
+		/**
+		 * Destroys the pool, by stopping all threads. May block
+		 * if some threads are actively executing a task, but any
+		 * remaining task in the internal queue will get cancelled
+		 */
 		~thread_pool();
 
-		void stop();
-		void wait();
+		/**
+		 * Adds a new task to the queue
+		 * @tparam R: The type of object returned by the task
+		 * @tparam F: A callable object type
+		 * @tparam Args: A list of argument types
+		 * @param f: The callable object to invoke
+		 * @param Args: The arguments to pass to f
+		 * @returns A std::future object you can use to wait on the task,
+		 * and get its result or any exception that might have occurred
+		 */
 		template <class R, class F, typename... Args>
 		[[nodiscard]]
 		std::future<R> enqueue_task(F &&f, Args &&...args) {
@@ -32,6 +52,24 @@ namespace libstra {
 			_cv.notify_one();
 			return res;
 		}
+		/**
+		 * Waits for all current tasks to finish executing
+		 * @note If you want to wait for a specific task, use the wait method
+		 * on the std::future object associated with the task
+		 */
+		void wait();
+		/**
+		 * Waits for all current tasks to finish, then stops and joins all the
+		 * threads
+		 * @note If the pool had already been stopped, this function is a no op
+		 */
+		void stop();
+		/**
+		 * Restarts the pool, with the same number of threads as when it was
+		 * first constructed
+		 * @note If the pool wasn't stopped, this function is a no op
+		 */
+		void restart();
 
 	private:
 		void thread_loop();
@@ -44,7 +82,11 @@ namespace libstra {
 			std::tuple<Args...> t{ forward<Args>(args)... }; // store the values
 			return [p = std::move(p), f = forward<F>(f),
 					args = std::move(t)]() mutable {
-				p.set_value(apply(std::move(f), std::move(args)));
+				try {
+					p.set_value(apply(std::move(f), std::move(args)));
+				} catch (...) {
+					p.set_exception(std::current_exception());
+				}
 			};
 		}
 		template <class R, class F,
@@ -54,8 +96,13 @@ namespace libstra {
 			std::tuple<Args...> t{ forward<Args>(args)... }; // store the values
 			return [p = std::move(p), f = forward<F>(f),
 					args = std::move(t)]() mutable {
-				apply(std::move(f), std::move(args));
-				p.set_value();
+				try {
+					apply(std::move(f), std::move(args));
+					p.set_value();
+
+				} catch (...) {
+					p.set_exception(std::current_exception());
+				}
 			};
 		}
 

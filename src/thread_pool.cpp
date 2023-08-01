@@ -27,6 +27,14 @@ namespace libstra {
 		_cv.notify_all();
 		join_threads();
 	}
+	void thread_pool::restart() {
+		lock_guard lk(_mutex);
+		if (!_stopped) return;
+
+		for (auto &t : _threads) {
+			t = std::thread(&thread_pool::thread_loop, this);
+		}
+	}
 	void thread_pool::thread_loop() {
 		for (;;) {
 			unique_lock lk(_mutex);
@@ -52,7 +60,13 @@ namespace libstra {
 	}
 
 	thread_pool::~thread_pool() {
-		stop();
+		{
+			lock_guard lk(_mutex);
+			if (_stopped) return;
+			_stopped = true;
+		}
+		_cv.notify_all();
+		join_threads();
 	}
 
 } // namespace libstra
