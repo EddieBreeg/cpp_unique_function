@@ -4,7 +4,11 @@
 #include <condition_variable>
 
 namespace libstra {
-	template <class CompletionFunction>
+	struct empty_function_t {
+		constexpr void operator()() const noexcept {}
+	};
+
+	template <class CompletionFunction = empty_function_t>
 	class barrier {
 		using unique_lock = std::unique_lock<std::mutex>;
 		using lock_guard = std::lock_guard<std::mutex>;
