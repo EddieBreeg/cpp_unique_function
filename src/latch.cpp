@@ -9,9 +9,8 @@ namespace libstra {
 
 	void latch::arrive() {
 		{
-			std::unique_lock<std::mutex> lk(_m);
-			if (!_n) return;
-			if (--_n) return;
+			std::lock_guard<std::mutex> lk(_m);
+			if (!_n || --_n) return;
 		}
 		_cv.notify_all();
 	}
@@ -25,14 +24,18 @@ namespace libstra {
 			_cv.wait(lk, [this]() { return !this->_n; });
 		}
 	}
+	bool latch::try_wait() noexcept {
+		std::unique_lock<std::mutex> lk(_m);
+		return _n == 0;
+	}
 	latch::latch(size_t n) {
 		std::lock_guard<std::mutex> lk(_m);
 		_n = n;
 	}
 	latch::~latch() {
-		if (!_n) return;
 		{
 			std::lock_guard<std::mutex> lk(_m);
+			if (!_n) return;
 			_n = 0;
 		}
 		_cv.notify_all();
