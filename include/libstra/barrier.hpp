@@ -48,8 +48,9 @@ namespace libstra {
 			unique_lock lk(_m);
 			if (!--_c) {
 				_f();
-				_cv.notify_all();
 				_c = _init;
+				lk.unlock();
+				_cv.notify_all();
 			}
 		}
 		/**
@@ -60,8 +61,9 @@ namespace libstra {
 			unique_lock lk(_m);
 			if (!--_c) {
 				_f();
-				_cv.notify_all();
 				_c = _init;
+				lk.unlock();
+				_cv.notify_all();
 			} else {
 				_cv.wait(lk);
 			}
@@ -75,8 +77,9 @@ namespace libstra {
 			--_init;
 			if (!--_c) {
 				_f();
-				_cv.notify_all();
 				_c = _init;
+				lk.unlock();
+				_cv.notify_all();
 			}
 		}
 		/**
