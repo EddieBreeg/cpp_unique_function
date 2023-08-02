@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <utility>
 #include <memory>
+#include "internal/config.h"
 
 namespace libstra {
 
@@ -42,13 +43,13 @@ namespace libstra {
 									   !std::is_same<U, not_null_ptr>::value,
 								   int> = 0>
 		constexpr not_null_ptr(U &&p) : _p(std::forward<U>(p)) {
-			if (!_p) throw null_ptr_error{};
+			if (!_p) _unlikely throw null_ptr_error{};
 		}
 		constexpr not_null_ptr(Ptr &&p) : _p(std::move(p)) {
-			if (!_p) throw null_ptr_error{};
+			if (!_p) _unlikely throw null_ptr_error{};
 		}
 		constexpr not_null_ptr(const Ptr &p) : _p(p) {
-			if (!_p) throw null_ptr_error{};
+			if (!_p) _unlikely throw null_ptr_error{};
 		}
 		template <class U,
 				  std::enable_if_t<std::is_convertible<U, Ptr>::value, int> = 0>
@@ -63,7 +64,7 @@ namespace libstra {
 									   !std::is_same<U, not_null_ptr>::value,
 								   int> = 0>
 		constexpr not_null_ptr &operator=(U &&p) {
-			if (!p) throw null_ptr_error{};
+			if (!p) _unlikely throw null_ptr_error{};
 			_p = std::forward<U>(p);
 			return *this;
 		}
@@ -83,12 +84,26 @@ namespace libstra {
 
 		[[nodiscard]]
 		constexpr auto &
-		operator*() noexcept {
+		operator*() & noexcept {
+			_assume(_p);
 			return *_p;
 		}
 		[[nodiscard]]
 		constexpr const auto &
-		operator*() const noexcept {
+		operator*() const & noexcept {
+			_assume(_p);
+			return *_p;
+		}
+		[[nodiscard]]
+		constexpr auto &&
+		operator*() && noexcept {
+			_assume(_p);
+			return *_p;
+		}
+		[[nodiscard]]
+		constexpr const auto &&
+		operator*() const && noexcept {
+			_assume(_p);
 			return *_p;
 		}
 

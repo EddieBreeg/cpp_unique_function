@@ -21,12 +21,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 add_library(libstra STATIC ${LIBSTRA_SRC})
 
 
-if(${MSVC})
-    target_compile_options(libstra PRIVATE /FI "libstra/internal/config.h")
-    else()
-    target_compile_options(libstra PRIVATE -include "libstra/internal/config.h")
-endif(${MSVC})
-
 
 target_compile_features(libstra PUBLIC cxx_std_14)
 target_include_directories(libstra PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
