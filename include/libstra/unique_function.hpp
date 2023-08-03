@@ -7,6 +7,16 @@
 #include <libstra/utility.hpp>
 
 namespace libstra {
+
+	template <class T>
+	struct is_function_ptr : std::false_type {};
+
+	template <class R, typename... Args>
+	struct is_function_ptr<R (*)(Args...)> : std::true_type {};
+
+	template <class T>
+	static constexpr bool is_function_ptr_v = is_function_ptr<T>::value;
+
 	// Exception thrown when the call operator is used on an invalid
 	// unique_function object
 	struct invalid_function_access {
@@ -119,8 +129,8 @@ namespace libstra {
 		/**
 		 * Contructs a unique_function instance from a function pointer
 		 */
-		unique_function(R (*f)(Args...)) noexcept :
-			_ptr((void *)f), _isSmall(true) {
+		unique_function(R (*f)(Args...)) noexcept : _ptr((void *)f) {
+			_mem[sizeof(_mem) - 1] = 1;
 			using F = R (*)(Args...);
 			_tid = &typeid(R(Args...));
 			_invoke = [](void *f, Args &&...args) {
@@ -133,12 +143,14 @@ namespace libstra {
 		 */
 		template <class F, typename = std::enable_if_t<!std::is_same<
 							   std::decay_t<F>, unique_function>::value>>
-		unique_function(F &&f) : _isSmall(sizeof(f) <= sizeof(_mem)) {
-			using _Raw = std::remove_reference_t<F>;
+		unique_function(F &&f) {
+			using _Raw = std::decay_t<F>;
+			bool isSmall = _mem[sizeof(_mem) - 1] = sizeof(_Raw) < sizeof(_mem);
 			_tid = &typeid(_Raw);
-			if (_isSmall) new (_mem) _Raw(libstra::forward<_Raw>(f));
+
+			if (isSmall) new (_mem) _Raw(libstra::forward<_Raw>(f));
 			else _ptr = new _Raw(libstra::forward<_Raw>(f));
-			if (_isSmall && !std::is_trivially_constructible<_Raw>::value)
+			if (isSmall && !std::is_trivially_constructible<_Raw>::value)
 				_deleter = [](void *ptr) { ((_Raw *)ptr)->~_Raw(); };
 			else _deleter = [](void *ptr) { delete (_Raw *)ptr; };
 			_invoke = [](void *f, Args &&...args) {
@@ -153,11 +165,9 @@ namespace libstra {
 		 * invalid state, such that a call to has_value() returns false
 		 */
 		unique_function(unique_function &&other) noexcept :
-			_ptr(other._ptr),
-			_deleter(other._deleter),
-			_invoke(other._invoke),
-			_tid(other._tid),
-			_isSmall(other._isSmall) {
+			_deleter(other._deleter), _invoke(other._invoke), _tid(other._tid) {
+			for (size_t i = 0; i < sizeof(_mem); i++)
+				_mem[i] = other._mem[i];
 			other.reset();
 		}
 		/**
@@ -182,15 +192,36 @@ namespace libstra {
 		 * @param other: The other function object to swap the contents with
 		 */
 		void swap(unique_function &other) noexcept {
-			std::swap(_ptr, other._ptr);
+			std::swap(_mem, other._mem);
 			std::swap(_invoke, other._invoke);
 			std::swap(_deleter, other._deleter);
-			std::swap(_isSmall, other._isSmall);
 			std::swap(_tid, other._tid);
 		}
 		unique_function &operator=(unique_function &) = delete;
 		unique_function &operator=(unique_function &&other) noexcept {
 			swap(other);
+			return *this;
+		}
+		template <class Func, typename = std::enable_if_t<!std::is_same<
+								  std::decay_t<Func>, unique_function>::value>>
+		unique_function &operator=(Func &&f) {
+			using _Raw = std::decay_t<Func>;
+			_deleter(is_small() ? _mem : _ptr);
+			char isSmall = _mem[sizeof(_mem) - 1] = sizeof(_Raw) < sizeof(_mem);
+			if (isSmall) {
+				new (_mem) _Raw(libstra::forward<Func>(f));
+				if (!std::is_trivially_destructible<_Raw>::value)
+					_deleter = [](void *ptr) { ((_Raw *)ptr)->~_Raw(); };
+				else _deleter = [](void *) {};
+			} else {
+				_ptr = new _Raw(libstra::forward<Func>(f));
+				_deleter = [](void *ptr) { delete (_Raw *)ptr; };
+			}
+			_invoke = [](void *f, Args &&...args) {
+				return (*(_Raw *)f)(libstra::forward<Args>(args)...);
+			};
+			if (is_function_ptr_v<_Raw>) _tid = &typeid(R(Args...));
+			else _tid = &typeid(_Raw);
 			return *this;
 		}
 		/**
@@ -202,7 +233,7 @@ namespace libstra {
 		 */
 		R operator()(Args &&...args) {
 			if (!_invoke) throw invalid_function_access{};
-			return _invoke(_isSmall ? _mem : _ptr, forward<Args>(args)...);
+			return _invoke(is_small() ? _mem : _ptr, forward<Args>(args)...);
 		}
 		/**
 		 * @return typeid(T) if the stored function has type T, otherwise
@@ -220,7 +251,7 @@ namespace libstra {
 		[[nodiscard]]
 		T *target() noexcept {
 			if (*_tid != typeid(T)) return nullptr;
-			return _isSmall ? (T *)_mem : (T *)_ptr;
+			return is_small() ? (T *)_mem : (T *)_ptr;
 		}
 		/** Returns a reference to the stored function object
 		 * @return A reference to the stored callable object if target_type() ==
@@ -236,26 +267,26 @@ namespace libstra {
 		 * Destroys the function object
 		 */
 		~unique_function() {
-			if (_isSmall) _deleter(_mem);
+			if (is_small()) _deleter(_mem);
 			else _deleter(_ptr);
 		}
 
 	private:
+		inline bool is_small() const noexcept { return _mem[sizeof(_mem) - 1]; }
 		inline void reset() noexcept {
-			_isSmall = false;
 			_deleter = [](void *) {};
-			_ptr = nullptr;
+			for (char &x : _mem)
+				x = 0;
 			_invoke = nullptr;
 			_tid = &typeid(void);
 		}
 		union {
-			void *_ptr = nullptr;
-			char _mem[sizeof(void *)];
+			char _mem[2 * alignof(void *)] = { 0 };
+			void *_ptr;
 		};
 		void (*_deleter)(void *ptr) = [](void *) {};
 		R (*_invoke)(void *, Args &&...) = nullptr;
 		const std::type_info *_tid = &typeid(void);
-		bool _isSmall = false;
 	};
 
 	template <class F>
