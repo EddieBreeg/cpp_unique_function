@@ -5,6 +5,7 @@
 #include <utility>
 #include <typeinfo>
 #include <libstra/utility.hpp>
+#include "internal/config.h"
 
 namespace libstra {
 
@@ -145,7 +146,8 @@ namespace libstra {
 							   std::decay_t<F>, unique_function>::value>>
 		unique_function(F &&f) {
 			using _Raw = std::decay_t<F>;
-			bool isSmall = _mem[sizeof(_mem) - 1] = sizeof(_Raw) < sizeof(_mem);
+			bool isSmall = _mem[sizeof(_mem) - 1] =
+				(sizeof(_Raw) < sizeof(_mem));
 			_tid = &typeid(_Raw);
 
 			if (isSmall) new (_mem) _Raw(libstra::forward<_Raw>(f));
@@ -206,8 +208,10 @@ namespace libstra {
 								  std::decay_t<Func>, unique_function>::value>>
 		unique_function &operator=(Func &&f) {
 			using _Raw = std::decay_t<Func>;
+			_assume(_deleter);
 			_deleter(is_small() ? _mem : _ptr);
-			char isSmall = _mem[sizeof(_mem) - 1] = sizeof(_Raw) < sizeof(_mem);
+			char isSmall = _mem[sizeof(_mem) - 1] =
+				(sizeof(_Raw) < sizeof(_mem));
 			if (isSmall) {
 				new (_mem) _Raw(libstra::forward<Func>(f));
 				if (!std::is_trivially_destructible<_Raw>::value)
@@ -241,6 +245,7 @@ namespace libstra {
 		 */
 		[[nodiscard]]
 		const std::type_info &target_type() const noexcept {
+			_assume(_tid);
 			return *_tid;
 		}
 		/**
@@ -250,6 +255,7 @@ namespace libstra {
 		template <class T>
 		[[nodiscard]]
 		T *target() noexcept {
+			_assume(_tid);
 			if (*_tid != typeid(T)) return nullptr;
 			return is_small() ? (T *)_mem : (T *)_ptr;
 		}
@@ -260,6 +266,7 @@ namespace libstra {
 		template <class T>
 		[[nodiscard]]
 		function_ref<R(Args...)> get_ref() {
+			_assume(_tid);
 			if (*_tid != typeid(T)) return {};
 			return *target<T>();
 		}
@@ -267,6 +274,7 @@ namespace libstra {
 		 * Destroys the function object
 		 */
 		~unique_function() {
+			_assume(_deleter);
 			if (is_small()) _deleter(_mem);
 			else _deleter(_ptr);
 		}
