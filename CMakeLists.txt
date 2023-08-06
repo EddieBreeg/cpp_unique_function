@@ -21,12 +21,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 add_library(libstra STATIC ${LIBSTRA_SRC})
 
 
-if(${MSVC})
-    target_compile_options(libstra PRIVATE /FI "libstra/internal/config.h")
-    else()
-    target_compile_options(libstra PRIVATE -include "libstra/internal/config.h")
-endif(${MSVC})
-
 
 target_compile_features(libstra PUBLIC cxx_std_14)
 target_include_directories(libstra PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -61,6 +55,9 @@ target_link_libraries(sem_tests PRIVATE libstra)
 add_executable(barrier_tests tests/barrier.cpp)
 target_link_libraries(barrier_tests PRIVATE libstra)
 
+add_executable(memory_tests tests/memory.cpp)
+target_link_libraries(memory_tests PRIVATE libstra)
+
 add_test(NAME UniqueFuntion COMMAND unique_function_test)
 add_test(NAME Storage COMMAND storage_test)
 add_test(NAME Utility COMMAND utils_tests)
@@ -68,6 +65,7 @@ add_test(NAME ThreadPool COMMAND thread_pool_tests)
 add_test(NAME Latch COMMAND latch_tests)
 add_test(NAME Semaphore COMMAND sem_tests)
 add_test(NAME Barrier COMMAND barrier_tests)
+add_test(NAME Memory COMMAND memory_tests)
 
     
 endif(${BUILD_TESTING})
