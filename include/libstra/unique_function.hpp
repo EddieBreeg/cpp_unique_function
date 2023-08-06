@@ -146,8 +146,8 @@ namespace libstra {
 							   std::decay_t<F>, unique_function>::value>>
 		unique_function(F &&f) {
 			using _Raw = std::decay_t<F>;
-			bool isSmall = _mem[sizeof(_mem) - 1] =
-				(sizeof(_Raw) < sizeof(_mem));
+			bool isSmall =
+				(_mem[sizeof(_mem) - 1] = (sizeof(_Raw) < sizeof(_mem)));
 			_tid = &typeid(_Raw);
 
 			if (isSmall) new (_mem) _Raw(libstra::forward<_Raw>(f));
