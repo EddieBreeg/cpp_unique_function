@@ -61,6 +61,9 @@ target_link_libraries(sem_tests PRIVATE libstra)
 add_executable(barrier_tests tests/barrier.cpp)
 target_link_libraries(barrier_tests PRIVATE libstra)
 
+add_executable(views_tests tests/views.cpp)
+target_link_libraries(views_tests PRIVATE libstra)
+
 add_test(NAME UniqueFuntion COMMAND unique_function_test)
 add_test(NAME Storage COMMAND storage_test)
 add_test(NAME Utility COMMAND utils_tests)
@@ -68,6 +71,7 @@ add_test(NAME ThreadPool COMMAND thread_pool_tests)
 add_test(NAME Latch COMMAND latch_tests)
 add_test(NAME Semaphore COMMAND sem_tests)
 add_test(NAME Barrier COMMAND barrier_tests)
+add_test(NAME Views COMMAND views_tests)
 
     
 endif(${BUILD_TESTING})
