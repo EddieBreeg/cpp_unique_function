@@ -15,5 +15,8 @@ int main(int argc, char const *argv[]) {
 	s = v.sub(0, 2);
 	assert(s.size() == 2 && s[0] == 0);
 
+	libstra::array_view<int> v2(X);
+	assert(v2.size() == std::extent<decltype(X)>::value);
+
 	return 0;
 }

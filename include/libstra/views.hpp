@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <iterator>
 
 namespace libstra {
 	template <class T>
@@ -13,8 +14,11 @@ namespace libstra {
 		constexpr array_view(const T *ptr, size_t n) noexcept :
 			_start(ptr), _end(ptr + n) {}
 		template <class Iter>
-		constexpr array_view(Iter begin, Iter end) noexcept :
+		constexpr array_view(Iter begin, Iter end) :
 			_start(&(*begin)), _end(&(*end)) {}
+		template <class Iterable>
+		constexpr array_view(const Iterable &x) :
+			_start(std::begin(x)), _end(std::end(x)) {}
 
 		[[nodiscard]]
 		constexpr const T &
