@@ -63,4 +63,19 @@ namespace libstra {
 		return apply(Indices{}, std::forward<F>(f), std::forward<Tuple>(args));
 	}
 
+	template <class T>
+	struct extent {};
+
+	template <class T, size_t N>
+	struct extent<T[N]> : integer_constant<size_t, N> {};
+
+	template <class T, size_t N>
+	class static_vector;
+
+	template <class T, size_t N>
+	struct extent<static_vector<T, N>> : integer_constant<size_t, N> {};
+
+	template <class T>
+	static constexpr size_t extent_v = extent<T>::value;
+
 } // namespace libstra
