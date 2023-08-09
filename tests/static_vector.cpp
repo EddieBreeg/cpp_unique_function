@@ -122,4 +122,23 @@ int main(int argc, char const *argv[]) {
 		libstra::static_vector<int, 3> v(3, 42);
 		assert(*v.data() == 42);
 	}
+	{
+		libstra::static_vector<Foo, 3> v(3);
+		v.clear();
+		assert(!v.size() && !Foo::instances);
+		v.resize(3);
+		assert(v.size() == 3 && Foo::instances == 3);
+		v.resize(1);
+		assert(Foo::instances == v.size());
+	}
+	{
+		libstra::static_vector<int, 5> v1 = { 0, 1 }, v2 = { 2, 3 };
+		v1.swap(v2);
+		assert(v1[0] == 2 && v1[1] == 3);
+		assert(v2[0] == 0 && v2[1] == 1);
+		v2.resize(1);
+		v2.swap(v1);
+		assert(v1.size() == 1 && v1[0] == 0);
+		assert(v2.size() == 2 && v2[0] == 2 && v2[1] == 3);
+	}
 }

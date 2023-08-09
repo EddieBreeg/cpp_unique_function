@@ -161,18 +161,7 @@ namespace libstra {
 		}
 
 		static_vector &operator=(static_vector &&other) {
-			_assume(_size <= N && other._size <= N);
-			size_t m = _size < other._size ? _size : other._size;
-			for (size_t i = 0; i < m; ++i) {
-				std::swap(*(_elems[i]), *(other._elems[i]));
-			}
-			for (size_t i = m; i < other._size; ++i) {
-				*(_elems[i]) = (T &&)*(other._elems[i]);
-			}
-			for (size_t i = m; i < _size; ++i) {
-				*(other._elems[i]) = (T &&)*(_elems[i]);
-			}
-			std::swap(_size, other._size);
+			swap(other);
 			return *this;
 		}
 		static_vector &operator=(const static_vector &other) {
@@ -371,6 +360,61 @@ namespace libstra {
 		[[nodiscard]]
 		static constexpr inline size_t capacity() noexcept {
 			return N;
+		}
+
+		void clear() {
+			if (std::is_trivially_constructible<T>::value) {
+				_size = 0;
+				return;
+			}
+			for (size_t i = 0; i < _size; ++i)
+				_elems[i]->~T();
+			_size = 0;
+		}
+		void resize(size_t newSize) {
+#ifndef NDEBUG
+			if (newSize > N) _unlikely {
+					throw std::out_of_range(
+						"New static_vector size was out of range");
+				}
+#endif
+			for (size_t i = _size; i < newSize; ++i)
+				new (_elems[i]._buf) T();
+			if (!std::is_trivially_destructible<T>::value) {
+				for (size_t i = newSize; i < _size; ++i)
+					_elems[i]->~T();
+			}
+			_size = newSize;
+		}
+
+		template <class U,
+				  std::enable_if_t<std::is_convertible<U, T>::value, int> = 0>
+		void resize(size_t newSize, const U &val = U()) {
+#ifndef NDEBUG
+			if (newSize > N) _unlikely {
+					throw std::out_of_range(
+						"New static_vector size was out of range");
+				}
+#endif
+			for (size_t i = _size; i < newSize; ++i)
+				new (_elems[i]._buf) T(val);
+			if (!std::is_trivially_destructible<T>::value) {
+				for (size_t i = newSize; i < _size; ++i)
+					_elems[i]->~T();
+			}
+			_size = newSize;
+		}
+
+		void swap(static_vector &other) {
+			_assume(_size <= N && other._size <= N);
+			const size_t m = _size < other._size ? _size : other._size;
+			for (size_t i = 0; i < m; i++)
+				std::swap(*(_elems[i]), *(other._elems[i]));
+			for (size_t i = m; i < _size; ++i)
+				new (other._elems[i]._buf) T(std::move(*(_elems[i])));
+			for (size_t i = m; i < other._size; ++i)
+				new (_elems[i]._buf) T(std::move(*(other._elems[i])));
+			std::swap(_size, other._size);
 		}
 
 		~static_vector() {
