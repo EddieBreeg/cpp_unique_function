@@ -417,6 +417,15 @@ namespace libstra {
 			std::swap(_size, other._size);
 		}
 
+		[[nodiscard]]
+		bool
+		operator==(const static_vector &other) const noexcept {
+			if (_size != other._size) return false;
+			for (size_t i = 0; i < _size; ++i)
+				if (*(_elems[i]) != *(other._elems[i])) return false;
+			return true;
+		}
+
 		~static_vector() {
 			if (std::is_trivially_destructible<T>::value) return;
 			for (size_t i = 0; i < _size; i++) {

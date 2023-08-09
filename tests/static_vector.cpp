@@ -53,9 +53,7 @@ int main(int argc, char const *argv[]) {
 		assert(std::distance(v.begin(), v.end()) == v.size());
 
 		auto v2 = v;
-		for (size_t i = 0; i < v.size(); i++) {
-			assert(v[i] == v2[i]);
-		}
+		assert(v == v2);
 	}
 	{
 		libstra::static_vector<Foo, 10> v(5);
