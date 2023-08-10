@@ -5,12 +5,12 @@
 
 namespace libstra {
 
-	template <class T>
 	/**
 	 * A lightweight object which provides a read-only interface for a
 	 * contiguous array
 	 * @tparam T: The type of elements contained in the referenced array
 	 */
+	template <class T>
 	class array_view {
 	private:
 		const T *_start = nullptr, *_end = nullptr;

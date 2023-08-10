@@ -10,6 +10,12 @@
 
 namespace libstra {
 
+	/**
+	 * A stack allocated dynamic array
+	 * @tparam T: The type of values in the array. T may not be a reference
+	 * type, use std::reference_wrapper to store references
+	 * @tparam N: The fixed capacity of the vector
+	 */
 	template <class T, size_t N>
 	class static_vector {
 		static_assert(!std::is_reference<T>::value,
@@ -98,7 +104,12 @@ namespace libstra {
 	public:
 		using iterator = iterator_base<false>;
 		using const_iterator = iterator_base<true>;
+		// Constructs an empty static_vector
 		static_vector() = default;
+		/**
+		 * Constructs a static_vector with n default-constructed elements
+		 * @exception May throw std::out_of_range if n > capacity()
+		 */
 		static_vector(size_t n) : _size(n) {
 #ifndef NDEBUG
 			if _unlikely (n > N)
@@ -108,6 +119,14 @@ namespace libstra {
 			for (size_t i = 0; i < n; i++)
 				new (_elems[i]._buf) T();
 		}
+		/**
+		 * Constructs a static_vector with n constructed elements, copied from
+		 * val. This constructor only participates in overload resolution if U
+		 * is convertible to T
+		 * @param n: The number of elements to construct
+		 * @param val: The default value for the elements to be constructed
+		 * @exception May throw std::out_of_range if n > capacity()
+		 */
 		template <class U,
 				  std::enable_if_t<std::is_convertible<U, T>::value, int> = 0>
 		static_vector(size_t n, const U &val) : _size(n) {
@@ -119,8 +138,17 @@ namespace libstra {
 			for (size_t i = 0; i < n; i++)
 				new (_elems[i]._buf) T(val);
 		}
+		/**
+		 * Constructs a static_vector from a pair of iterators.
+		 * This constructor only participates in overload resolution if
+		 * std::iterator_traits<Iter>::difference_type is present
+		 * @param start: An iterator to the first element in the array
+		 * @param end: An iterator to past the last element in the array
+		 * @warning If end is not reachable from start, behaviour is undefined
+		 * @exception May throw std::out_of_range if std::distance(start, end) >
+		 * capacity()
+		 */
 		template <class Iter,
-				  // only enable if Iter is a valid iterator type
 				  typename std::iterator_traits<Iter>::difference_type = 0>
 		static_vector(Iter start, Iter end) : _size(std::distance(start, end)) {
 #ifndef NDEBUG
@@ -131,6 +159,11 @@ namespace libstra {
 			for (auto p = _elems; start != end; ++start, ++p)
 				new (p->_buf) T(*start);
 		}
+		/**
+		 * Constructs a static_vector from an initializer list. This constructor
+		 * only participates in overload resolution if U is convertible to T
+		 * @exception May throw std::out_of_range if il.size() > capacity()
+		 */
 		template <class U,
 				  std::enable_if_t<std::is_convertible<U, T>::value, int> = 0>
 		static_vector(std::initializer_list<U> il) : _size(il.size()) {
@@ -143,23 +176,39 @@ namespace libstra {
 			for (auto p = _elems; it != il.end(); ++it, ++p)
 				new (p->_buf) T(*it);
 		}
-
+		/**
+		 * Copy constructor
+		 */
 		static_vector(const static_vector &other) {
 			_assume(other._size <= N);
 			for (; _size < other._size; ++_size)
 				new (_elems[_size]._buf) T(other[_size]);
 		}
+		/**
+		 * Move constructor: moves all elements contained in other.
+		 * @note Because the vector is statically allocated on the stack,
+		 * the complexity is the same as for a copy, that is: linear with
+		 * other.size()
+		 */
 		static_vector(static_vector &&other) noexcept {
 			_assume(other._size <= N);
 			for (; _size < other._size; ++_size)
 				new (_elems[_size]._buf) T((T &&)(other[_size]));
 			other._size = 0;
 		}
-
+		/**
+		 * Move assignement
+		 * @note Because the vector is statically allocated on the stack,
+		 * the complexity is the same as for a copy, that is: linear with
+		 * other.size()
+		 */
 		static_vector &operator=(static_vector &&other) {
 			swap(other);
 			return *this;
 		}
+		/**
+		 * Copy assignement
+		 */
 		static_vector &operator=(const static_vector &other) {
 			_assume(_size <= N && other._size <= N);
 			for (size_t i = 0; i < other._size; ++i)
@@ -171,7 +220,11 @@ namespace libstra {
 			_size = other._size;
 			return *this;
 		}
-
+		/**
+		 * Appends a value to the vector. The new value is assigned using
+		 * perfect forwarding
+		 * @exception May throw std::out_of_range if size() == capacity()
+		 */
 		template <class U>
 		iterator push_back(U &&val) {
 #ifndef NDEBUG
@@ -183,7 +236,13 @@ namespace libstra {
 			*(_elems[_size++]) = std::forward<U>(val);
 			return it;
 		}
-
+		/**
+		 * Constructs a value in place. The new element is constructed using a
+		 * placement new expression
+		 * @param args: A list of arguments to forward to the constructor of the
+		 * new object
+		 * @exception May throw std::out_of_range if size() == capacity()
+		 */
 		template <class... Args>
 		iterator emplace_back(Args &&...args) {
 #ifndef NDEBUG
@@ -195,6 +254,9 @@ namespace libstra {
 			new (_elems[_size++]._buf) T(libstra::forward<Args>(args)...);
 			return it;
 		}
+		/**
+		 * Removes the last element in the vector
+		 */
 		void pop_back() {
 #ifndef NDEBUG
 			if (!_size)
@@ -204,7 +266,10 @@ namespace libstra {
 			--_size;
 			if (!std::is_trivially_destructible<T>::value) _elems[_size]->~T();
 		}
-
+		/**
+		 * Returns a reference to the first element in the vector
+		 * @exception May throw std::out_of_range if the vector is empty
+		 */
 		[[nodiscard]]
 		T &front() & {
 #ifndef NDEBUG
@@ -214,6 +279,10 @@ namespace libstra {
 #endif
 			return *(_elems[0]);
 		}
+		/**
+		 * Returns a reference to the first element in the vector
+		 * @exception May throw std::out_of_range if the vector is empty
+		 */
 		[[nodiscard]]
 		const T &front() const & {
 #ifndef NDEBUG
@@ -223,6 +292,10 @@ namespace libstra {
 #endif
 			return *(_elems[0]);
 		}
+		/**
+		 * Returns a reference to the first element in the vector
+		 * @exception May throw std::out_of_range if the vector is empty
+		 */
 		[[nodiscard]]
 		T &&front() && {
 #ifndef NDEBUG
@@ -232,6 +305,10 @@ namespace libstra {
 #endif
 			return *(_elems[0]);
 		}
+		/**
+		 * Returns a reference to the first element in the vector
+		 * @exception May throw std::out_of_range if the vector is empty
+		 */
 		[[nodiscard]]
 		const T &&front() const && {
 #ifndef NDEBUG
@@ -241,6 +318,10 @@ namespace libstra {
 #endif
 			return *(_elems[0]);
 		}
+		/**
+		 * Returns a reference to the last element in the vector
+		 * @exception May throw std::out_of_range if the vector is empty
+		 */
 		[[nodiscard]]
 		T &back() & {
 #ifndef NDEBUG
@@ -250,6 +331,10 @@ namespace libstra {
 #endif
 			return *(_elems[_size - 1]);
 		}
+		/**
+		 * Returns a reference to the last element in the vector
+		 * @exception May throw std::out_of_range if the vector is empty
+		 */
 		[[nodiscard]]
 		const T &back() const & {
 #ifndef NDEBUG
@@ -259,6 +344,10 @@ namespace libstra {
 #endif
 			return *(_elems[_size - 1]);
 		}
+		/**
+		 * Returns a reference to the last element in the vector
+		 * @exception May throw std::out_of_range if the vector is empty
+		 */
 		[[nodiscard]]
 		T &&back() && {
 #ifndef NDEBUG
@@ -268,6 +357,10 @@ namespace libstra {
 #endif
 			return *(_elems[_size - 1]);
 		}
+		/**
+		 * Returns a reference to the last element in the vector
+		 * @exception May throw std::out_of_range if the vector is empty
+		 */
 		[[nodiscard]]
 		const T &&back() const && {
 #ifndef NDEBUG
@@ -277,24 +370,41 @@ namespace libstra {
 #endif
 			return *(_elems[_size - 1]);
 		}
-
+		/**
+		 * Returns an iterator to the first element in the vector. The behaviour
+		 * of said iterator is undefined if the vector was empty
+		 */
 		[[nodiscard]]
 		iterator begin() noexcept {
 			return iterator(_elems);
 		}
+		/**
+		 * Returns an iterator to the first element in the vector. The behaviour
+		 * of said iterator is undefined if the vector was empty
+		 */
 		[[nodiscard]]
 		const_iterator begin() const noexcept {
 			return _elems;
 		}
+		/**
+		 * Returns an iterator to past the last element in the vector
+		 */
 		[[nodiscard]]
 		iterator end() noexcept {
 			return iterator(_elems + _size);
 		}
+		/**
+		 * Returns an iterator to past the last element in the vector
+		 */
 		[[nodiscard]]
 		const_iterator end() const noexcept {
 			return (_elems + _size);
 		}
-
+		/**
+		 * Accesses an element in the vector
+		 * @param i: The index of the element to access
+		 * @exception May throw std::out_of_range if i >= size()
+		 */
 		[[nodiscard]]
 		inline T &
 		operator[](size_t i) & {
@@ -304,6 +414,11 @@ namespace libstra {
 #endif
 			return *(_elems[i]);
 		}
+		/**
+		 * Accesses an element in the vector
+		 * @param i: The index of the element to access
+		 * @exception May throw std::out_of_range if i >= size()
+		 */
 		[[nodiscard]]
 		inline const T &
 		operator[](size_t i) const & {
@@ -313,6 +428,11 @@ namespace libstra {
 #endif
 			return *(_elems[i]);
 		}
+		/**
+		 * Accesses an element in the vector
+		 * @param i: The index of the element to access
+		 * @exception May throw std::out_of_range if i >= size()
+		 */
 		[[nodiscard]]
 		inline T &&
 		operator[](size_t i) && {
@@ -322,6 +442,11 @@ namespace libstra {
 #endif
 			return *(_elems[i]);
 		}
+		/**
+		 * Accesses an element in the vector
+		 * @param i: The index of the element to access
+		 * @exception May throw std::out_of_range if i >= size()
+		 */
 		[[nodiscard]]
 		inline const T &&
 		operator[](size_t i) const && {
@@ -332,28 +457,48 @@ namespace libstra {
 			return *(_elems[i]);
 		}
 
+		/**
+		 * @returns A raw pointer to the underlying data buffer. This pointer is
+		 * always valid, even when the vector is empty
+		 */
 		[[nodiscard]]
 		T *data() noexcept {
 			return (T *)_elems;
 		}
+		/**
+		 * @returns A raw pointer to the underlying data buffer. This pointer is
+		 * always valid, even when the vector is empty
+		 */
 		[[nodiscard]]
 		const T *data() const noexcept {
 			return (T *)_elems;
 		}
-
+		/**
+		 * @return The current number of elements in the vector
+		 */
 		[[nodiscard]]
 		inline size_t size() const noexcept {
 			return _size;
 		}
+		/**
+		 * @returns size() == 0
+		 */
 		[[nodiscard]]
 		inline bool is_empty() const noexcept {
 			return _size == 0;
 		}
+		/**
+		 * @returns N
+		 */
 		[[nodiscard]]
 		static constexpr inline size_t capacity() noexcept {
 			return N;
 		}
-
+		/**
+		 * Clears the contents of the vector. If T is not trivially
+		 * destructible, all the objects present in the vector will get
+		 * destroyed manually
+		 */
 		void clear() {
 			if (std::is_trivially_constructible<T>::value) {
 				_size = 0;
@@ -363,6 +508,12 @@ namespace libstra {
 				_elems[i]->~T();
 			_size = 0;
 		}
+		/**
+		 * Changes the size of the vector. If newSize < size() and T is not
+		 * trivially destructible, all the extra objects will get destroyed
+		 * manually
+		 * @exception May throw std::out_of_range if newSize > capacity()
+		 */
 		void resize(size_t newSize) {
 #ifndef NDEBUG
 			if _unlikely (newSize > N) {
@@ -379,9 +530,16 @@ namespace libstra {
 			_size = newSize;
 		}
 
+		/**
+		 * Changes the size of the vector. If newSize < size() and T is not
+		 * trivially destructible, all the extra objects will get destroyed
+		 * manually. If newSize > size(), the newly created elements will be
+		 * initialized with val
+		 * @exception May throw std::out_of_range if newSize > capacity()
+		 */
 		template <class U,
 				  std::enable_if_t<std::is_convertible<U, T>::value, int> = 0>
-		void resize(size_t newSize, const U &val = U()) {
+		void resize(size_t newSize, const U &val) {
 #ifndef NDEBUG
 			if _unlikely (newSize > N) {
 				throw std::out_of_range(
@@ -396,7 +554,9 @@ namespace libstra {
 			}
 			_size = newSize;
 		}
-
+		/**
+		 * Swaps the contents of *this with other
+		 */
 		void swap(static_vector &other) {
 			_assume(_size <= N && other._size <= N);
 			const size_t m = _size < other._size ? _size : other._size;
@@ -409,6 +569,10 @@ namespace libstra {
 			std::swap(_size, other._size);
 		}
 
+		/**
+		 * Returns true if other.size() == size() and if all elements in both
+		 * vectors are equal
+		 */
 		[[nodiscard]]
 		bool
 		operator==(const static_vector &other) const noexcept {
@@ -417,7 +581,10 @@ namespace libstra {
 				if (*(_elems[i]) != *(other._elems[i])) return false;
 			return true;
 		}
-
+		/**
+		 * If T is not trivially destructible, calls T::~T() on all the elements
+		 * in the vector. Otherwise, does nothing
+		 */
 		~static_vector() {
 			if (std::is_trivially_destructible<T>::value) return;
 			for (size_t i = 0; i < _size; i++) {
