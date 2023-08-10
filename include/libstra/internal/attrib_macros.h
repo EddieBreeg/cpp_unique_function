@@ -1,9 +1,9 @@
-#ifndef LIBSTRA_CONFIG_H
-#define LIBSTRA_CONFIG_H
+#ifndef LIBSTRA_ATTRIBUTE_MACROS_H
+#define LIBSTRA_ATTRIBUTE_MACROS_H
 
 #if __cplusplus >= 202002L
 #define _unlikely(expr) (expr) [[unlikely]]
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) || defined(__clang__)
 #define _unlikely(expr) (__builtin_expect(!!(expr), 0))
 #else
 #define _unlikely(expr) (expr)
