@@ -5,7 +5,7 @@
 #include <utility>
 #include <typeinfo>
 #include <libstra/utility.hpp>
-#include "internal/config.h"
+#include "internal/attrib_macros.h"
 
 namespace libstra {
 

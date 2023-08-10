@@ -1,10 +1,12 @@
 #ifndef LIBSTRA_CONFIG_H
 #define LIBSTRA_CONFIG_H
 
-#if __cplusplus < 202002L
-#define _unlikely
+#if __cplusplus >= 202002L
+#define _unlikely(expr) (expr) [[unlikely]]
+#elif defined(__GNUC__)
+#define _unlikely(expr) (__builtin_expect(!!(expr), 0))
 #else
-#define _unlikely [[unlikely]]
+#define _unlikely(expr) (expr)
 #endif
 
 #if __cplusplus >= 202302L

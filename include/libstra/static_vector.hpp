@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <libstra/utility.hpp>
 #include <iterator>
-#include "internal/config.h"
+#include "internal/attrib_macros.h"
 #include <initializer_list>
 
 namespace libstra {
@@ -101,10 +101,9 @@ namespace libstra {
 		static_vector() = default;
 		static_vector(size_t n) : _size(n) {
 #ifndef NDEBUG
-			if (n > N)
-				_unlikely throw std::out_of_range(
-					"Attempted to construct a static "
-					"vector with too many elements");
+			if _unlikely (n > N)
+				throw std::out_of_range("Attempted to construct a static "
+										"vector with too many elements");
 #endif
 			for (size_t i = 0; i < n; i++)
 				new (_elems[i]._buf) T();
@@ -113,10 +112,9 @@ namespace libstra {
 				  std::enable_if_t<std::is_convertible<U, T>::value, int> = 0>
 		static_vector(size_t n, const U &val) : _size(n) {
 #ifndef NDEBUG
-			if (n > N)
-				_unlikely throw std::out_of_range(
-					"Attempted to construct a static "
-					"vector with too many elements");
+			if _unlikely (n > N)
+				throw std::out_of_range("Attempted to construct a static "
+										"vector with too many elements");
 #endif
 			for (size_t i = 0; i < n; i++)
 				new (_elems[i]._buf) T(val);
@@ -126,10 +124,9 @@ namespace libstra {
 				  typename std::iterator_traits<Iter>::difference_type = 0>
 		static_vector(Iter start, Iter end) : _size(std::distance(start, end)) {
 #ifndef NDEBUG
-			if (_size > N)
-				_unlikely throw std::out_of_range(
-					"Attempted to construct a static "
-					"vector with too many elements");
+			if _unlikely (_size > N)
+				throw std::out_of_range("Attempted to construct a static "
+										"vector with too many elements");
 #endif
 			for (auto p = _elems; start != end; ++start, ++p)
 				new (p->_buf) T(*start);
@@ -138,10 +135,9 @@ namespace libstra {
 				  std::enable_if_t<std::is_convertible<U, T>::value, int> = 0>
 		static_vector(std::initializer_list<U> il) : _size(il.size()) {
 #ifndef NDEBUG
-			if (_size > N)
-				_unlikely throw std::out_of_range(
-					"Attempted to construct a static "
-					"vector with too many elements");
+			if _unlikely (_size > N)
+				throw std::out_of_range("Attempted to construct a static "
+										"vector with too many elements");
 #endif
 			auto it = il.begin();
 			for (auto p = _elems; it != il.end(); ++it, ++p)
@@ -179,8 +175,8 @@ namespace libstra {
 		template <class U>
 		iterator push_back(U &&val) {
 #ifndef NDEBUG
-			if (_size == N)
-				_unlikely throw std::out_of_range(
+			if _unlikely (_size == N)
+				throw std::out_of_range(
 					"Attempted to add an element to a full static vector");
 #endif
 			iterator it = end();
@@ -191,8 +187,8 @@ namespace libstra {
 		template <class... Args>
 		iterator emplace_back(Args &&...args) {
 #ifndef NDEBUG
-			if (_size == N)
-				_unlikely throw std::out_of_range(
+			if _unlikely (_size == N)
+				throw std::out_of_range(
 					"Attempted to add an element to a full static vector");
 #endif
 			iterator it = end();
@@ -212,8 +208,8 @@ namespace libstra {
 		[[nodiscard]]
 		T &front() & {
 #ifndef NDEBUG
-			if (!_size)
-				_unlikely throw std::out_of_range(
+			if _unlikely (!_size)
+				throw std::out_of_range(
 					"Called front() on an empty static_vector");
 #endif
 			return *(_elems[0]);
@@ -221,8 +217,8 @@ namespace libstra {
 		[[nodiscard]]
 		const T &front() const & {
 #ifndef NDEBUG
-			if (!_size)
-				_unlikely throw std::out_of_range(
+			if _unlikely (!_size)
+				throw std::out_of_range(
 					"Called front() on an empty static_vector");
 #endif
 			return *(_elems[0]);
@@ -230,8 +226,8 @@ namespace libstra {
 		[[nodiscard]]
 		T &&front() && {
 #ifndef NDEBUG
-			if (!_size)
-				_unlikely throw std::out_of_range(
+			if _unlikely (!_size)
+				throw std::out_of_range(
 					"Called front() on an empty static_vector");
 #endif
 			return *(_elems[0]);
@@ -239,8 +235,8 @@ namespace libstra {
 		[[nodiscard]]
 		const T &&front() const && {
 #ifndef NDEBUG
-			if (!_size)
-				_unlikely throw std::out_of_range(
+			if _unlikely (!_size)
+				throw std::out_of_range(
 					"Called front() on an empty static_vector");
 #endif
 			return *(_elems[0]);
@@ -248,8 +244,8 @@ namespace libstra {
 		[[nodiscard]]
 		T &back() & {
 #ifndef NDEBUG
-			if (!_size)
-				_unlikely throw std::out_of_range(
+			if _unlikely (!_size)
+				throw std::out_of_range(
 					"Called back() on an empty static_vector");
 #endif
 			return *(_elems[_size - 1]);
@@ -257,8 +253,8 @@ namespace libstra {
 		[[nodiscard]]
 		const T &back() const & {
 #ifndef NDEBUG
-			if (!_size)
-				_unlikely throw std::out_of_range(
+			if _unlikely (!_size)
+				throw std::out_of_range(
 					"Called back() on an empty static_vector");
 #endif
 			return *(_elems[_size - 1]);
@@ -266,8 +262,8 @@ namespace libstra {
 		[[nodiscard]]
 		T &&back() && {
 #ifndef NDEBUG
-			if (!_size)
-				_unlikely throw std::out_of_range(
+			if _unlikely (!_size)
+				throw std::out_of_range(
 					"Called back() on an empty static_vector");
 #endif
 			return *(_elems[_size - 1]);
@@ -275,8 +271,8 @@ namespace libstra {
 		[[nodiscard]]
 		const T &&back() const && {
 #ifndef NDEBUG
-			if (!_size)
-				_unlikely throw std::out_of_range(
+			if _unlikely (!_size)
+				throw std::out_of_range(
 					"Called back() on an empty static_vector");
 #endif
 			return *(_elems[_size - 1]);
@@ -303,9 +299,8 @@ namespace libstra {
 		inline T &
 		operator[](size_t i) & {
 #ifndef NDEBUG
-			if (i >= _size)
-				_unlikely throw std::out_of_range(
-					"static_vector subscript out of range");
+			if _unlikely (i >= _size)
+				throw std::out_of_range("static_vector subscript out of range");
 #endif
 			return *(_elems[i]);
 		}
@@ -313,9 +308,8 @@ namespace libstra {
 		inline const T &
 		operator[](size_t i) const & {
 #ifndef NDEBUG
-			if (i >= _size)
-				_unlikely throw std::out_of_range(
-					"static_vector subscript out of range");
+			if _unlikely (i >= _size)
+				throw std::out_of_range("static_vector subscript out of range");
 #endif
 			return *(_elems[i]);
 		}
@@ -323,9 +317,8 @@ namespace libstra {
 		inline T &&
 		operator[](size_t i) && {
 #ifndef NDEBUG
-			if (i >= _size)
-				_unlikely throw std::out_of_range(
-					"static_vector subscript out of range");
+			if _unlikely (i >= _size)
+				throw std::out_of_range("static_vector subscript out of range");
 #endif
 			return *(_elems[i]);
 		}
@@ -333,9 +326,8 @@ namespace libstra {
 		inline const T &&
 		operator[](size_t i) const && {
 #ifndef NDEBUG
-			if (i >= _size)
-				_unlikely throw std::out_of_range(
-					"static_vector subscript out of range");
+			if _unlikely (i >= _size)
+				throw std::out_of_range("static_vector subscript out of range");
 #endif
 			return *(_elems[i]);
 		}
@@ -373,10 +365,10 @@ namespace libstra {
 		}
 		void resize(size_t newSize) {
 #ifndef NDEBUG
-			if (newSize > N) _unlikely {
-					throw std::out_of_range(
-						"New static_vector size was out of range");
-				}
+			if _unlikely (newSize > N) {
+				throw std::out_of_range(
+					"New static_vector size was out of range");
+			}
 #endif
 			for (size_t i = _size; i < newSize; ++i)
 				new (_elems[i]._buf) T();
@@ -391,10 +383,10 @@ namespace libstra {
 				  std::enable_if_t<std::is_convertible<U, T>::value, int> = 0>
 		void resize(size_t newSize, const U &val = U()) {
 #ifndef NDEBUG
-			if (newSize > N) _unlikely {
-					throw std::out_of_range(
-						"New static_vector size was out of range");
-				}
+			if _unlikely (newSize > N) {
+				throw std::out_of_range(
+					"New static_vector size was out of range");
+			}
 #endif
 			for (size_t i = _size; i < newSize; ++i)
 				new (_elems[i]._buf) T(val);
