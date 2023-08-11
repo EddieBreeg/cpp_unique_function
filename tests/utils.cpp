@@ -1,5 +1,6 @@
 #include <libstra/utility.hpp>
 #include <vector>
+#include <list>
 
 using IntSeq = libstra::make_integer_sequence<int, 3>;
 static_assert(
@@ -79,11 +80,21 @@ int main(int argc, char const *argv[]) {
 					  libstra::is_forward_iterator_v<C> &&
 					  !libstra::is_forward_iterator_v<B>,
 				  "is_forward_iterator test failed");
+	using list_iter_t = std::list<int>::iterator;
+
 	static_assert(libstra::is_bidirectional_iterator_v<int *> &&
 					  libstra::is_bidirectional_iterator_v<const int *> &&
 					  libstra::is_bidirectional_iterator_v<iter> &&
 					  libstra::is_bidirectional_iterator_v<const_iter> &&
+					  libstra::is_bidirectional_iterator_v<list_iter_t> &&
 					  !libstra::is_bidirectional_iterator_v<B> &&
 					  !libstra::is_bidirectional_iterator_v<C>,
 				  "is_bidirectional_iterator test failed");
+
+	static_assert(libstra::is_random_access_iterator_v<int *> &&
+					  libstra::is_random_access_iterator_v<iter> &&
+					  libstra::is_random_access_iterator_v<const_iter> &&
+					  !libstra::is_random_access_iterator_v<list_iter_t> &&
+					  !libstra::is_random_access_iterator_v<C>,
+				  "is_random_access_iterator test failed");
 }

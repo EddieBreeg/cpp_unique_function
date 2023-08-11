@@ -237,4 +237,46 @@ namespace libstra {
 	static constexpr bool is_bidirectional_iterator_v =
 		is_bidirectional_iterator<T>::value;
 
+	template <class Iter>
+	using difference_type =
+		typename std::iterator_traits<Iter>::difference_type;
+
+	template <class T, class = void>
+	struct is_random_access_iterator : std::false_type {};
+
+	template <class T>
+	struct is_random_access_iterator<
+		T,
+		std::void_t<
+			std::enable_if_t<
+				is_bidirectional_iterator_v<T> &&
+				std::is_same<
+					T &, decltype((T &)std::declval<T>() +=
+								  std::declval<difference_type<T>>())>::value &&
+				std::is_same<
+					T &, decltype((T &)std::declval<T>() -=
+								  std::declval<difference_type<T>>())>::value &&
+				std::is_same<
+					T, decltype(std::declval<T>() +
+								std::declval<difference_type<T>>())>::value &&
+				std::is_same<T, decltype(std::declval<difference_type<T>>() +
+										 std::declval<T>())>::value &&
+				std::is_same<
+					T, decltype(std::declval<T>() -
+								std::declval<difference_type<T>>())>::value &&
+				std::is_same<difference_type<T>,
+							 decltype(std::declval<T>() -
+									  std::declval<T>())>::value &&
+				std::is_same<dereference_t<T>,
+							 decltype((std::declval<T>())[std::declval<
+								 difference_type<T>>()])>::value>,
+			decltype(std::declval<T>() < std::declval<T>()),
+			decltype(std::declval<T>() > std::declval<T>()),
+			decltype(std::declval<T>() <= std::declval<T>()),
+			decltype(std::declval<T>() >= std::declval<T>())>>
+		: std::true_type {};
+
+	template <class T>
+	static constexpr bool is_random_access_iterator_v =
+		is_random_access_iterator<T>::value;
 } // namespace libstra
