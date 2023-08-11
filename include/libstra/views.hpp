@@ -29,7 +29,6 @@ namespace libstra {
 		 */
 		constexpr array_view(const T *ptr, size_t n) noexcept :
 			_start(ptr), _end(ptr + n) {}
-		template <class Iter>
 		/**
 		 * Constructs a view from a pair of iterators
 		 * @tparam Iter: The iterator type
@@ -38,6 +37,7 @@ namespace libstra {
 		 * @warning If end is not reachable from begin, the behaviour is
 		 * undefined
 		 */
+		template <class Iter>
 		constexpr array_view(Iter begin, Iter end) :
 			_start(&(*begin)), _end(&(*end)) {}
 		template <class Iterable>

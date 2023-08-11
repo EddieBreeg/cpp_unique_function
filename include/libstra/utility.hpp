@@ -90,7 +90,7 @@ namespace libstra {
 	 * - T must be swappable
 	 */
 	template <class T, class = void>
-	struct is_legacy_iterator : std::false_type {};
+	struct is_iterator : std::false_type {};
 
 	/**
 	 * Given x, an object of type T, dereference_t is an alias for the type of
@@ -138,19 +138,19 @@ namespace libstra {
 												(T &)std::declval<T>()))> {};
 
 	template <class T>
-	struct is_legacy_iterator<
+	struct is_iterator<
 		T,
 		std::void_t<dereference_t<T>, _details::preinc_t<T>,
 					std::enable_if_t<
 						std::is_copy_constructible<T>::value &&
 						std::is_copy_assignable<T>::value &&
 						std::is_destructible<T>::value && is_swappable_v<T> &&
-						!std::is_void<dereference_t<T>>::value &&
+						// !std::is_void<dereference_t<T>>::value &&
 						std::is_same<T &, _details::preinc_t<T>>::value>>>
 		: std::true_type {};
 
 	template <class T>
-	static constexpr bool is_legacy_iterator_v = is_legacy_iterator<T>::value;
+	static constexpr bool is_iterator_v = is_iterator<T>::value;
 
 	namespace _details {
 		template <class T>
@@ -177,12 +177,9 @@ namespace libstra {
 
 	template <class T>
 	struct is_input_iterator<
-		T, std::void_t<std::enable_if_t<is_legacy_iterator_v<T>>,
-					   _details::eq_t<T>, _details::neq_t<T>,
-					   _details::postinc_t<T>, _details::member_access_t<T>,
-					   std::enable_if_t<
-						   std::is_same<_details::postinc_t<T>, T>::value>>>
-		: std::true_type {};
+		T, std::void_t<std::enable_if_t<is_iterator_v<T>>, _details::eq_t<T>,
+					   _details::neq_t<T>, _details::postinc_t<T>,
+					   _details::member_access_t<T>>> : std::true_type {};
 
 	template <class T>
 	static constexpr bool is_input_iterator_v = is_input_iterator<T>::value;
@@ -194,7 +191,7 @@ namespace libstra {
 		T,
 		std::void_t<
 			std::enable_if_t<
-				is_legacy_iterator_v<T> &&
+				is_iterator_v<T> &&
 				std::is_convertible<_details::postinc_t<T>, const T &>::value &&
 				std::is_same<T &, _details::preinc_t<T>>::value>,
 			decltype(*std::declval<T>() = std::declval<dereference_t<T>>())>>
@@ -202,5 +199,42 @@ namespace libstra {
 
 	template <class T>
 	static constexpr bool is_output_iterator_v = is_output_iterator<T>::value;
+
+	template <class T>
+	static constexpr bool is_input_output_iterator_v =
+		is_input_iterator_v<T> && is_output_iterator_v<T>;
+
+	namespace _details {
+		template <class T>
+		using predec_t = decltype(--(T &)std::declval<T>());
+		template <class T>
+		using postdec_t = decltype(((T &)std::declval<T>())--);
+	} // namespace _details
+
+	template <class T, class = void>
+	struct is_forward_iterator : std::false_type {};
+
+	template <class T>
+	struct is_forward_iterator<
+		T,
+		std::void_t<std::enable_if_t<
+			is_input_iterator_v<T> && std::is_default_constructible<T>::value &&
+			std::is_reference<dereference_t<T>>::value>>> : std::true_type {};
+	template <class T>
+	static constexpr bool is_forward_iterator_v = is_forward_iterator<T>::value;
+
+	template <class T, class = void>
+	struct is_bidirectional_iterator : std::false_type {};
+
+	template <class T>
+	struct is_bidirectional_iterator<
+		T, std::enable_if_t<
+			   is_forward_iterator_v<T> &&
+			   std::is_same<T &, _details::predec_t<T>>::value &&
+			   std::is_constructible<const T &, _details::postdec_t<T>>::value>>
+		: std::true_type {};
+	template <class T>
+	static constexpr bool is_bidirectional_iterator_v =
+		is_bidirectional_iterator<T>::value;
 
 } // namespace libstra
