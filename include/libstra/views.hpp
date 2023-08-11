@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include "utility.hpp"
 #include <iterator>
 
 namespace libstra {
@@ -37,7 +38,8 @@ namespace libstra {
 		 * @warning If end is not reachable from begin, the behaviour is
 		 * undefined
 		 */
-		template <class Iter>
+		template <class Iter,
+				  class = std::enable_if_t<is_random_access_iterator_v<Iter>>>
 		constexpr array_view(Iter begin, Iter end) :
 			_start(&(*begin)), _end(&(*end)) {}
 		template <class Iterable>
