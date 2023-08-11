@@ -40,4 +40,27 @@ int main(int argc, char const *argv[]) {
 			libstra::is_legacy_iterator_v<A> &&
 			!libstra::is_legacy_iterator_v<B>,
 		"is_iterator test failed");
+	static_assert(libstra::is_void_ptr_v<void *> &&
+					  libstra::is_void_ptr_v<const void *> &&
+					  !libstra::is_void_ptr_v<int *> &&
+					  !libstra::is_void_ptr_v<void>,
+				  "is_void_ptr test failed");
+	{
+		using iter = std::vector<int>::iterator;
+		using const_iter = std::vector<int>::const_iterator;
+		static_assert(libstra::is_input_iterator_v<int *> &&
+						  libstra::is_input_iterator_v<const int *> &&
+						  libstra::is_input_iterator_v<iter> &&
+						  libstra::is_input_iterator_v<const_iter>,
+					  "is_input_iterator test failed");
+	}
+	{
+		using iter = std::vector<int>::iterator;
+		using const_iter = std::vector<int>::const_iterator;
+		static_assert(libstra::is_output_iterator_v<int *> &&
+						  libstra::is_output_iterator_v<iter> &&
+						  !libstra::is_output_iterator_v<const int *> &&
+						  !libstra::is_output_iterator_v<const_iter>,
+					  "is_output_iterator test failed");
+	}
 }

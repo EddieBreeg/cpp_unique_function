@@ -99,10 +99,19 @@ namespace libstra {
 	template <class T>
 	using dereference_t = decltype(*std::declval<T>());
 
+	template <class T>
+	static constexpr bool is_void_ptr_v =
+		std::is_pointer<T>::value &&
+		std::is_void<std::remove_pointer_t<T>>::value;
+
 	namespace _details {
 		template <class T, class U>
 		using swap_t =
 			decltype(std::swap((T &)std::declval<T>(), (U &)std::declval<U>()));
+		template <class T>
+		using preinc_t = decltype(++(T &)std::declval<T>());
+		template <class T>
+		using postinc_t = decltype(((T &)std::declval<T>())++);
 	} // namespace _details
 
 	template <class T, class U, class = void>
@@ -131,16 +140,67 @@ namespace libstra {
 	template <class T>
 	struct is_legacy_iterator<
 		T,
-		std::void_t<
-			dereference_t<T>, decltype(++(T &)std::declval<T>()),
-			std::enable_if_t<
-				std::is_copy_constructible<T>::value &&
-				std::is_copy_assignable<T>::value &&
-				std::is_destructible<T>::value && is_swappable_v<T> &&
-				!std::is_void<dereference_t<T>>::value &&
-				std::is_same<T &, decltype(++(T &)std::declval<T>())>::value>>>
+		std::void_t<dereference_t<T>, _details::preinc_t<T>,
+					std::enable_if_t<
+						std::is_copy_constructible<T>::value &&
+						std::is_copy_assignable<T>::value &&
+						std::is_destructible<T>::value && is_swappable_v<T> &&
+						!std::is_void<dereference_t<T>>::value &&
+						std::is_same<T &, _details::preinc_t<T>>::value>>>
 		: std::true_type {};
 
 	template <class T>
 	static constexpr bool is_legacy_iterator_v = is_legacy_iterator<T>::value;
+
+	namespace _details {
+		template <class T>
+		using eq_t = decltype(std::declval<T>() == std::declval<T>());
+		template <class T>
+		using neq_t = decltype(std::declval<T>() != std::declval<T>());
+
+		template <class T, class = void>
+		struct member_access {
+			using type = decltype(std::declval<T>().operator->());
+		};
+		template <class T>
+		struct member_access<T, std::enable_if_t<std::is_pointer<T>::value &&
+												 !is_void_ptr_v<T>>> {
+			using type = T;
+		};
+		template <class T>
+		using member_access_t = typename member_access<T>::type;
+
+	} // namespace _details
+
+	template <class T, class = void>
+	struct is_input_iterator : std::false_type {};
+
+	template <class T>
+	struct is_input_iterator<
+		T, std::void_t<std::enable_if_t<is_legacy_iterator_v<T>>,
+					   _details::eq_t<T>, _details::neq_t<T>,
+					   _details::postinc_t<T>, _details::member_access_t<T>,
+					   std::enable_if_t<
+						   std::is_same<_details::postinc_t<T>, T>::value>>>
+		: std::true_type {};
+
+	template <class T>
+	static constexpr bool is_input_iterator_v = is_input_iterator<T>::value;
+
+	template <class T, class = void>
+	struct is_output_iterator : std::false_type {};
+	template <class T>
+	struct is_output_iterator<
+		T,
+		std::void_t<
+			std::enable_if_t<
+				is_legacy_iterator_v<T> &&
+				std::is_convertible<_details::postinc_t<T>, const T &>::value &&
+				std::is_same<T &, _details::preinc_t<T>>::value>,
+			decltype(*std::declval<T>() = std::declval<dereference_t<T>>())>>
+		: std::true_type {};
+
+	template <class T>
+	static constexpr bool is_output_iterator_v = is_output_iterator<T>::value;
+
 } // namespace libstra
