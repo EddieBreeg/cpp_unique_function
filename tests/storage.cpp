@@ -39,9 +39,7 @@ int main() {
 				  "constexpt test failed");
 	s1 = A(1);
 	decltype(s1) s2 = 2;
-#if __cplusplus >= 201703
-	static_assert(noexcept(s1.swap(s2)));
-#endif
+	static_assert(noexcept(s1.swap(s2)), "nothrow storage swap test failed");
 	s1.swap(s2);
 	assert(s1->x == 2);
 	assert(s2->x == 1);

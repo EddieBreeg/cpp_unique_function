@@ -107,15 +107,11 @@ namespace libstra {
 			return &_b._val;
 		}
 
-#ifdef _CPP_17
 		template <class U = T>
 		constexpr void swap(storage &other) noexcept(
-			noexcept(std::is_nothrow_swappable_with_v<T, U>)) {
+			libstra::is_nothrow_swappable_with<T, U>::value) {
 			std::swap(**this, *other);
 		}
-#else
-		constexpr void swap(storage &other) { std::swap(**this, *other); }
-#endif
 	};
 
 	template <class T, class U>

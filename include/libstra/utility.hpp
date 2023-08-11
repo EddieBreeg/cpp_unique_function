@@ -78,4 +78,69 @@ namespace libstra {
 	template <class T>
 	static constexpr size_t extent_v = extent<T>::value;
 
+	/**
+	 * If T satisfies the requirements of LegacyIterator, declares a static
+	 * boolean member equal to true. Otherwise, the same static member is equal
+	 * to false. In other words, given an object x of type T, the following
+	 * conditions must be met:
+	 * - *x must be a valid expression and must not return void
+	 * - ++x must be a valid expression which returns an object of type T&
+	 * - T must be copy assignable and constructible
+	 * - T must be destructible
+	 * - T must be swappable
+	 */
+	template <class T, class = void>
+	struct is_legacy_iterator : std::false_type {};
+
+	/**
+	 * Given x, an object of type T, dereference_t is an alias for the type of
+	 * *x, if and only if *x is a valid expression
+	 */
+	template <class T>
+	using dereference_t = decltype(*std::declval<T>());
+
+	namespace _details {
+		template <class T, class U>
+		using swap_t =
+			decltype(std::swap((T &)std::declval<T>(), (U &)std::declval<U>()));
+	} // namespace _details
+
+	template <class T, class U, class = void>
+	struct is_swappable_with : std::false_type {};
+	template <class T, class U>
+	struct is_swappable_with<
+		T, U, std::void_t<_details::swap_t<T, U>, _details::swap_t<U, T>>>
+		: std::true_type {};
+
+	template <class T, class U>
+	static constexpr bool is_swappable_with_v = is_swappable_with<T, U>::value;
+
+	template <class T>
+	static constexpr bool is_swappable_v = is_swappable_with_v<T, T>;
+
+	template <class T, class U, class = void>
+	struct is_nothrow_swappable_with : std::false_type {};
+	template <class T, class U>
+	struct is_nothrow_swappable_with<
+		T, U, std::enable_if_t<is_swappable_with_v<T, U>>>
+		: std::bool_constant<noexcept(std::swap((T &)std::declval<T>(),
+												(U &)std::declval<U>())) &&
+							 noexcept(std::swap((U &)std::declval<U>(),
+												(T &)std::declval<T>()))> {};
+
+	template <class T>
+	struct is_legacy_iterator<
+		T,
+		std::void_t<
+			dereference_t<T>, decltype(++(T &)std::declval<T>()),
+			std::enable_if_t<
+				std::is_copy_constructible<T>::value &&
+				std::is_copy_assignable<T>::value &&
+				std::is_destructible<T>::value && is_swappable_v<T> &&
+				!std::is_void<dereference_t<T>>::value &&
+				std::is_same<T &, decltype(++(T &)std::declval<T>())>::value>>>
+		: std::true_type {};
+
+	template <class T>
+	static constexpr bool is_legacy_iterator_v = is_legacy_iterator<T>::value;
 } // namespace libstra
