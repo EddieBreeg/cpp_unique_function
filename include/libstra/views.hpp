@@ -53,10 +53,14 @@ namespace libstra {
 		constexpr array_view(Iter begin, Iter end) :
 			_start(&(*begin)), _end(&(*end)) {}
 		template <class Iterable,
-				  std::enable_if_t<is_iterable_v<Iterable>, int> = 0>
+				  std::enable_if_t<
+					  is_iterable_v<Iterable> &&
+						  is_contiguous_iterator_v<_details::begin_t<Iterable>>,
+					  int> = 0>
 		/**
-		 * Constructs a view from a generic iterable object. std::begin(x) and
-		 * std::end(x) must be well formed expressions
+		 * Constructs a view from a generic iterable object. This constructor
+		 * only participates in overload resolution if Iterable is a contiguous
+		 * iterable object
 		 */
 		constexpr array_view(const Iterable &x) :
 			_start(std::begin(x)), _end(std::end(x)) {}

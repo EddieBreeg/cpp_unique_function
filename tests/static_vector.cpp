@@ -81,7 +81,7 @@ int main(int argc, char const *argv[]) {
 	{
 		constexpr int X[] = { 0, 11, 666 };
 		libstra::static_vector<int, 10> v(std::begin(X), std::end(X));
-		constexpr auto N = libstra::extent_v<decltype(X)>;
+		constexpr auto N = std::extent<decltype(X)>::value;
 		assert(v.size() == N);
 		for (size_t i = 0; i < N; ++i)
 			assert(v[i] == X[i]);

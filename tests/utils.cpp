@@ -102,6 +102,9 @@ int main(int argc, char const *argv[]) {
 					  !libstra::is_random_access_iterator_v<C>,
 				  "is_random_access_iterator test failed");
 
+	static_assert(libstra::is_contiguous_iterator_v<const int *>,
+				  "is_contiguous_iterator test failed");
+
 	static_assert(libstra::is_iterable_v<int[2]> &&
 					  libstra::is_iterable_v<libstra::static_vector<A, 3>> &&
 					  libstra::is_iterable_v<libstra::array_view<void *>>,
@@ -118,7 +121,9 @@ int main(int argc, char const *argv[]) {
 			std::is_same<libstra::difference_type<Bar>, long long>::value,
 		"difference_type test failed");
 	static_assert(libstra::is_invocable_v<int(int), int> &&
-					  libstra::is_invocable_v<int (*)()>,
+					  libstra::is_invocable_v<int (*)()> &&
+					  !libstra::is_invocable_v<int(), int> &&
+					  !libstra::is_invocable_v<void(int)>,
 				  "is_invocable test failed");
 }
 
