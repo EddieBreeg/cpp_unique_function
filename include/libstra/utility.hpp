@@ -327,4 +327,28 @@ namespace libstra {
 	template <class T>
 	static constexpr bool is_iterable_v = is_iterable<T>::value;
 
+	namespace _details {
+		template <class F, class... Args>
+		using invoke_t = decltype(std::declval<F>()(std::declval<Args>()...));
+
+		template <class... Args>
+		struct Pack_t {};
+
+		template <class F, class Args, class = void>
+		struct invokable_with : std::false_type {};
+
+		template <class F, class... Args>
+		struct invokable_with<F, Pack_t<Args...>,
+							  std::void_t<invoke_t<F, Args...>>>
+			: std::true_type {};
+
+	} // namespace _details
+
+	template <class T, class... Args>
+	struct is_invocable
+		: _details::invokable_with<T, _details::Pack_t<Args...>> {};
+
+	template <class T, class... Args>
+	static constexpr bool is_invocable_v = is_invocable<T, Args...>::value;
+
 } // namespace libstra

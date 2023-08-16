@@ -115,6 +115,9 @@ int main(int argc, char const *argv[]) {
 		std::is_same<libstra::difference_type<Foo>, int>::value &&
 			std::is_same<libstra::difference_type<Bar>, long long>::value,
 		"difference_type test failed");
+	static_assert(libstra::is_invocable_v<int(int), int> &&
+					  libstra::is_invocable_v<int (*)()>,
+				  "is_invocable test failed");
 }
 
 template <class T, class = void>
