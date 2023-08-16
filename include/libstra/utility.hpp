@@ -181,12 +181,11 @@ namespace libstra {
 	template <class T, class U>
 	struct is_nothrow_swappable_with<
 		T, U, std::enable_if_t<is_swappable_with_v<T, U>>>
-		: std::bool_constant<
-			  noexcept(
-				  std::swap(std::declval<std::add_lvalue_reference_t<T>>(),
+		: bool_constant<noexcept(std::swap(
+							std::declval<std::add_lvalue_reference_t<T>>(),
 							std::declval<std::add_lvalue_reference_t<U>>())) &&
-			  noexcept(
-				  std::swap(std::declval<std::add_lvalue_reference_t<U>>(),
+						noexcept(std::swap(
+							std::declval<std::add_lvalue_reference_t<U>>(),
 							std::declval<std::add_lvalue_reference_t<T>>()))> {
 	};
 
