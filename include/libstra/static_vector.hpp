@@ -221,7 +221,8 @@ namespace libstra {
 				*(_elems[i]) = *(other._elems[i]);
 			if (!std::is_trivially_destructible<T>::value) {
 				for (size_t i = other._size; i < _size; ++i)
-					_elems[i]->~T();
+					reinterpret_cast<T *>(_elems + i)->~T();
+				;
 			}
 			_size = other._size;
 			return *this;
@@ -511,7 +512,8 @@ namespace libstra {
 				return;
 			}
 			for (size_t i = 0; i < _size; ++i)
-				_elems[i]->~T();
+				reinterpret_cast<T *>(_elems + i)->~T();
+			;
 			_size = 0;
 		}
 		/**
@@ -531,7 +533,7 @@ namespace libstra {
 				new (_elems[i]._buf) T();
 			if (!std::is_trivially_destructible<T>::value) {
 				for (size_t i = newSize; i < _size; ++i)
-					_elems[i]->~T();
+					reinterpret_cast<T *>(_elems + i)->~T();
 			}
 			_size = newSize;
 		}
@@ -556,7 +558,8 @@ namespace libstra {
 				new (_elems[i]._buf) T(val);
 			if (!std::is_trivially_destructible<T>::value) {
 				for (size_t i = newSize; i < _size; ++i)
-					_elems[i]->~T();
+					reinterpret_cast<T *>(_elems + i)->~T();
+				;
 			}
 			_size = newSize;
 		}
@@ -594,7 +597,7 @@ namespace libstra {
 		~static_vector() {
 			if (std::is_trivially_destructible<T>::value) return;
 			for (size_t i = 0; i < _size; i++) {
-				_elems[i]->~T();
+				reinterpret_cast<T *>(_elems + i)->~T();
 			}
 		}
 	};
