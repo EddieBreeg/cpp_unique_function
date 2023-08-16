@@ -59,10 +59,10 @@ namespace libstra {
 		}
 		function_ref(const function_ref &) = default;
 		/** Constructs the reference from a generic callable object */
-		template <
-			class Func,
-			typename = std::enable_if_t<
-				!std::is_same<std::decay_t<Func>, function_ref>::value, bool>>
+		template <class Func,
+				  typename = std::enable_if_t<
+					  !std::is_same<std::decay_t<Func>, function_ref>::value &&
+					  is_invocable_v<Func, Args...>>>
 		function_ref(Func &&f) noexcept {
 			using _Raw_t = std::remove_reference_t<Func>;
 			_ptr = &f;
@@ -142,8 +142,10 @@ namespace libstra {
 		/**
 		 * Contructs a unique_function instance from a generic callable object
 		 */
-		template <class F, typename = std::enable_if_t<!std::is_same<
-							   std::decay_t<F>, unique_function>::value>>
+		template <class F,
+				  typename = std::enable_if_t<
+					  !std::is_same<std::decay_t<F>, unique_function>::value &&
+					  is_invocable_v<F, Args...>>>
 		unique_function(F &&f) {
 			using _Raw = std::decay_t<F>;
 			bool isSmall =
