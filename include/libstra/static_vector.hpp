@@ -102,8 +102,14 @@ namespace libstra {
 		};
 
 	public:
+		using value_type = T;
+		using reference = T &;
+		using const_reference = const T &;
+		using size_type = size_t;
 		using iterator = iterator_base<false>;
 		using const_iterator = iterator_base<true>;
+		using difference_type = typename iterator::difference_type;
+
 		// Constructs an empty static_vector
 		static_vector() = default;
 		/**
