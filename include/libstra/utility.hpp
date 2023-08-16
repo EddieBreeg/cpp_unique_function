@@ -569,10 +569,10 @@ namespace libstra {
 	namespace _details {
 		template <class T>
 		using begin_t = decltype(std::begin(
-			(std::add_lvalue_reference_t<T>)std::declval<T>()));
+			std::declval<std::add_lvalue_reference_t<T>>()));
 		template <class T>
-		using end_t = decltype(std::end(
-			(std::add_lvalue_reference_t<T>)std::declval<T>()));
+		using end_t =
+			decltype(std::end(std::declval<std::add_lvalue_reference_t<T>>()));
 	} // namespace _details
 
 	template <class T>
