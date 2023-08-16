@@ -17,6 +17,16 @@ namespace libstra {
 		const T *_start = nullptr, *_end = nullptr;
 
 	public:
+		using value_type = T;
+		using reference = const T &;
+		using const_reference = reference;
+		using pointer = const T *;
+		using iterator = pointer;
+		using const_iterator = iterator;
+		using difference_type =
+			decltype(std::declval<pointer>() - std::declval<pointer>());
+		using size_type = size_t;
+
 		/**
 		 * Constructs an empty view
 		 */
@@ -42,7 +52,8 @@ namespace libstra {
 				  class = std::enable_if_t<is_random_access_iterator_v<Iter>>>
 		constexpr array_view(Iter begin, Iter end) :
 			_start(&(*begin)), _end(&(*end)) {}
-		template <class Iterable>
+		template <class Iterable,
+				  std::enable_if_t<is_iterable_v<Iterable>, int> = 0>
 		/**
 		 * Constructs a view from a generic iterable object. std::begin(x) and
 		 * std::end(x) must be well formed expressions

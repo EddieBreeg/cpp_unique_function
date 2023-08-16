@@ -1,4 +1,6 @@
 #include <libstra/utility.hpp>
+#include <libstra/static_vector.hpp>
+#include <libstra/views.hpp>
 #include <vector>
 #include <list>
 
@@ -97,4 +99,29 @@ int main(int argc, char const *argv[]) {
 					  !libstra::is_random_access_iterator_v<list_iter_t> &&
 					  !libstra::is_random_access_iterator_v<C>,
 				  "is_random_access_iterator test failed");
+
+	static_assert(libstra::is_iterable_v<int[2]> &&
+					  libstra::is_iterable_v<libstra::static_vector<A, 3>> &&
+					  libstra::is_iterable_v<libstra::array_view<void *>>,
+				  "is_iterable test failed");
+	struct Foo {
+		int operator-(Foo) { return 0; }
+		using difference_type = long long;
+	};
+	struct Bar {
+		using difference_type = long long;
+	};
+	static_assert(
+		std::is_same<libstra::difference_type<Foo>, int>::value &&
+			std::is_same<libstra::difference_type<Bar>, long long>::value,
+		"difference_type test failed");
 }
+
+template <class T, class = void>
+struct has_diff_t : std::false_type {};
+template <class T>
+struct has_diff_t<T, std::void_t<libstra::difference_type<T>>>
+	: std::true_type {};
+
+static_assert(has_diff_t<double>::value && !has_diff_t<void>::value,
+			  "difference_type test failed");

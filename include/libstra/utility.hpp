@@ -1,6 +1,7 @@
 #pragma once
 
 #include <type_traits>
+#include <iterator>
 #include <cstddef>
 #include <tuple>
 
@@ -145,7 +146,6 @@ namespace libstra {
 						std::is_copy_constructible<T>::value &&
 						std::is_copy_assignable<T>::value &&
 						std::is_destructible<T>::value && is_swappable_v<T> &&
-						// !std::is_void<dereference_t<T>>::value &&
 						std::is_same<T &, _details::preinc_t<T>>::value>>>
 		: std::true_type {};
 
@@ -237,9 +237,33 @@ namespace libstra {
 	static constexpr bool is_bidirectional_iterator_v =
 		is_bidirectional_iterator<T>::value;
 
-	template <class Iter>
+	namespace _details {
+		template <class T>
+		using sub_t = decltype(std::declval<T>() - std::declval<T>());
+
+		template <class T, class = void>
+		struct is_subtractible : std::false_type {};
+
+		template <class T>
+		struct is_subtractible<T, std::void_t<sub_t<T>>> : std::true_type {};
+
+		template <class T, bool = false, class = void>
+		struct diff_t {};
+
+		template <class T>
+		struct diff_t<T, false, std::void_t<typename T::difference_type>> {
+			using type = typename T::difference_type;
+		};
+		template <class T>
+		struct diff_t<T, true, std::void_t<sub_t<T>>> {
+			using type = sub_t<T>;
+		};
+
+	} // namespace _details
+
+	template <class T>
 	using difference_type =
-		typename std::iterator_traits<Iter>::difference_type;
+		typename _details::diff_t<T, _details::is_subtractible<T>::value>::type;
 
 	template <class T, class = void>
 	struct is_random_access_iterator : std::false_type {};
@@ -279,4 +303,28 @@ namespace libstra {
 	template <class T>
 	static constexpr bool is_random_access_iterator_v =
 		is_random_access_iterator<T>::value;
+
+	template <class T, class = void>
+	struct is_iterable : std::false_type {};
+
+	namespace _details {
+		template <class T>
+		using begin_t = decltype(std::begin(
+			(std::add_lvalue_reference_t<T>)std::declval<T>()));
+		template <class T>
+		using end_t = decltype(std::end(
+			(std::add_lvalue_reference_t<T>)std::declval<T>()));
+	} // namespace _details
+
+	template <class T>
+	struct is_iterable<
+		T, std::void_t<std::enable_if_t<
+			   is_iterator_v<_details::begin_t<T>> &&
+			   std::is_same<_details::begin_t<T>, _details::end_t<T>>::value &&
+			   !std::is_void<dereference_t<_details::begin_t<T>>>::value>>>
+		: std::true_type {};
+
+	template <class T>
+	static constexpr bool is_iterable_v = is_iterable<T>::value;
+
 } // namespace libstra
