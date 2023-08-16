@@ -108,11 +108,14 @@ namespace libstra {
 	namespace _details {
 		template <class T, class U>
 		using swap_t =
-			decltype(std::swap((T &)std::declval<T>(), (U &)std::declval<U>()));
+			decltype(std::swap(std::declval<std::add_lvalue_reference_t<T>>(),
+							   std::declval<std::add_lvalue_reference_t<U>>()));
 		template <class T>
-		using preinc_t = decltype(++(T &)std::declval<T>());
+		using preinc_t =
+			decltype(++std::declval<std::add_lvalue_reference_t<T>>());
 		template <class T>
-		using postinc_t = decltype(((T &)std::declval<T>())++);
+		using postinc_t =
+			decltype((std::declval<std::add_lvalue_reference_t<T>>())++);
 	} // namespace _details
 
 	template <class T, class U, class = void>
@@ -133,10 +136,14 @@ namespace libstra {
 	template <class T, class U>
 	struct is_nothrow_swappable_with<
 		T, U, std::enable_if_t<is_swappable_with_v<T, U>>>
-		: std::bool_constant<noexcept(std::swap((T &)std::declval<T>(),
-												(U &)std::declval<U>())) &&
-							 noexcept(std::swap((U &)std::declval<U>(),
-												(T &)std::declval<T>()))> {};
+		: std::bool_constant<
+			  noexcept(
+				  std::swap(std::declval<std::add_lvalue_reference_t<T>>(),
+							std::declval<std::add_lvalue_reference_t<U>>())) &&
+			  noexcept(
+				  std::swap(std::declval<std::add_lvalue_reference_t<U>>(),
+							std::declval<std::add_lvalue_reference_t<T>>()))> {
+	};
 
 	template <class T>
 	struct is_iterator<
@@ -206,9 +213,11 @@ namespace libstra {
 
 	namespace _details {
 		template <class T>
-		using predec_t = decltype(--(T &)std::declval<T>());
+		using predec_t =
+			decltype(--std::declval<std::add_lvalue_reference_t<T>>());
 		template <class T>
-		using postdec_t = decltype(((T &)std::declval<T>())--);
+		using postdec_t =
+			decltype((std::declval<std::add_lvalue_reference_t<T>>())--);
 	} // namespace _details
 
 	template <class T, class = void>
@@ -231,7 +240,7 @@ namespace libstra {
 		T, std::enable_if_t<
 			   is_forward_iterator_v<T> &&
 			   std::is_same<T &, _details::predec_t<T>>::value &&
-			   std::is_constructible<const T &, _details::postdec_t<T>>::value>>
+			   std::is_convertible<const T &, _details::postdec_t<T>>::value>>
 		: std::true_type {};
 	template <class T>
 	static constexpr bool is_bidirectional_iterator_v =
@@ -275,11 +284,13 @@ namespace libstra {
 			std::enable_if_t<
 				is_bidirectional_iterator_v<T> &&
 				std::is_same<
-					T &, decltype((T &)std::declval<T>() +=
-								  std::declval<difference_type<T>>())>::value &&
+					T &,
+					decltype(std::declval<std::add_lvalue_reference_t<T>>() +=
+							 std::declval<difference_type<T>>())>::value &&
 				std::is_same<
-					T &, decltype((T &)std::declval<T>() -=
-								  std::declval<difference_type<T>>())>::value &&
+					T &,
+					decltype(std::declval<std::add_lvalue_reference_t<T>>() -=
+							 std::declval<difference_type<T>>())>::value &&
 				std::is_same<
 					T, decltype(std::declval<T>() +
 								std::declval<difference_type<T>>())>::value &&

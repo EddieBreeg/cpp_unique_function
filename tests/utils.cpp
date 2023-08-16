@@ -28,8 +28,10 @@ int main(int argc, char const *argv[]) {
 
 	static_assert(res == 2, "constexpr apply test failed");
 	static_assert(libstra::is_swappable_v<int> &&
-					  !libstra::is_swappable_v<void>,
+					  !libstra::is_swappable_v<void> &&
+					  libstra::is_swappable_v<std::vector<int>::iterator>,
 				  "is_swappable test failed");
+
 	static_assert(libstra::is_nothrow_swappable_with<int, int>::value,
 				  "nothrow_swappable_with test failed");
 	static_assert(!libstra::is_iterator_v<void *> &&
