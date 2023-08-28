@@ -609,4 +609,23 @@ namespace libstra {
 	template <class T, class... Args>
 	static constexpr bool is_invocable_v = is_invocable<T, Args...>::value;
 
+	template <class T>
+	struct type_identity {
+		using type = T;
+	};
+
+	namespace details {
+		template <size_t N, class First, class... Others>
+		struct nth_type_impl {
+			using type = typename nth_type_impl<N - 1, Others...>::type;
+		};
+
+		template <class First, class... O>
+		struct nth_type_impl<0, First, O...> : type_identity<First> {};
+
+	} // namespace details
+
+	template <size_t N, class... T>
+	struct nth_type : details::nth_type_impl<N, T...> {};
+
 } // namespace libstra

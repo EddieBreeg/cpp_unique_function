@@ -125,6 +125,11 @@ int main(int argc, char const *argv[]) {
 					  !libstra::is_invocable_v<int(), int> &&
 					  !libstra::is_invocable_v<void(int)>,
 				  "is_invocable test failed");
+	static_assert(
+		std::is_same<libstra::nth_type<0, int, double>::type, int>::value &&
+			std::is_same<libstra::nth_type<1, int, double>::type,
+						 double>::value,
+		"nth_type test failed");
 }
 
 template <class T, class = void>
