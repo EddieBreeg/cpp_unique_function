@@ -625,7 +625,35 @@ namespace libstra {
 
 	} // namespace details
 
+	/**
+	 * If sizeof...(T...) > N, then typename nth_type<N, T...>::type will be
+	 * equal to the Nth type in template parameter pack T
+	 */
 	template <size_t N, class... T>
 	struct nth_type : details::nth_type_impl<N, T...> {};
+
+	template <size_t N, class... T>
+	using nth_type_t = typename nth_type<N, T...>::type;
+
+	namespace details {
+		template <class T, class First, class... Others>
+		struct is_one_of : bool_constant<std::is_same<T, First>::value ||
+										 is_one_of<T, Others...>::value> {};
+		template <class T, class... Others>
+		struct is_one_of<T, T, Others...> : std::true_type {};
+
+		template <class T, class U>
+		struct is_one_of<T, U> : bool_constant<std::is_same<T, U>::value> {};
+	} // namespace details
+
+	/**
+	 * Declares a static bool constant equal to true if T is present at least
+	 * once is U..., and false otherwise
+	 */
+	template <class T, class... U>
+	struct is_one_of : details::is_one_of<T, U...> {};
+
+	template <class T, class... U>
+	static constexpr bool is_one_of_v = is_one_of<T, U...>::value;
 
 } // namespace libstra
