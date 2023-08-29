@@ -614,7 +614,7 @@ namespace libstra {
 		using type = T;
 	};
 
-	namespace details {
+	namespace _details {
 		template <size_t N, class First, class... Others>
 		struct nth_type_impl {
 			using type = typename nth_type_impl<N - 1, Others...>::type;
@@ -623,19 +623,34 @@ namespace libstra {
 		template <class First, class... O>
 		struct nth_type_impl<0, First, O...> : type_identity<First> {};
 
-	} // namespace details
+#if __cplusplus >= 201703L
+		template <size_t N, auto First, auto... Others>
+		struct nth_val {
+			static constexpr auto value = nth_val<N - 1, Others...>::value;
+		};
+		template <auto First, auto... O>
+		struct nth_val<0, First, O...> {
+			static constexpr auto value = First;
+		};
+#endif
+	} // namespace _details
 
 	/**
 	 * If sizeof...(T...) > N, then typename nth_type<N, T...>::type will be
 	 * equal to the Nth type in template parameter pack T
 	 */
 	template <size_t N, class... T>
-	struct nth_type : details::nth_type_impl<N, T...> {};
+	struct nth_type : _details::nth_type_impl<N, T...> {};
 
 	template <size_t N, class... T>
 	using nth_type_t = typename nth_type<N, T...>::type;
 
-	namespace details {
+#if __cplusplus >= 201703L
+	template <size_t N, auto... Values>
+	static constexpr auto nth_value = _details::nth_val<N, Values...>::value;
+#endif
+
+	namespace _details {
 		template <class T, class First, class... Others>
 		struct is_one_of : bool_constant<std::is_same<T, First>::value ||
 										 is_one_of<T, Others...>::value> {};
@@ -644,14 +659,14 @@ namespace libstra {
 
 		template <class T, class U>
 		struct is_one_of<T, U> : bool_constant<std::is_same<T, U>::value> {};
-	} // namespace details
+	} // namespace _details
 
 	/**
 	 * Declares a static bool constant equal to true if T is present at least
 	 * once is U..., and false otherwise
 	 */
 	template <class T, class... U>
-	struct is_one_of : details::is_one_of<T, U...> {};
+	struct is_one_of : _details::is_one_of<T, U...> {};
 
 	template <class T, class... U>
 	static constexpr bool is_one_of_v = is_one_of<T, U...>::value;

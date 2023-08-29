@@ -134,6 +134,11 @@ int main(int argc, char const *argv[]) {
 					  libstra::is_one_of_v<int, float, void *, int> &&
 					  !libstra::is_one_of_v<int, void, float, size_t>,
 				  "is_one_of test failed");
+#if __cplusplus >= 201703L
+	static_assert(libstra::nth_value<0, 1, 2, 3> == 1 &&
+					  libstra::nth_value<1, 0, 'a', 3ULL> == 'a',
+				  "nth_value test failed");
+#endif
 }
 
 template <class T, class = void>
