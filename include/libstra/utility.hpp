@@ -416,18 +416,36 @@ namespace libstra {
 			using type = sub_t<T>;
 		};
 
+		template <class T>
+		using difference_type =
+			typename diff_t<T, is_subtractible<T>::value>::type;
+
+		template <class T, class = void>
+		struct inc_traits {};
+
+		template <class T>
+		struct inc_traits<
+			T, std::enable_if_t<std::is_integral<difference_type<T>>::value>> {
+			using difference_type = difference_type<T>;
+		};
+
 	} // namespace _details
+
+	template <class T>
+	struct incrementable_traits : _details::inc_traits<T> {};
+
+	template <class T>
+	struct incrementable_traits<const T> : incrementable_traits<T> {};
 
 	template <class T>
 	/**
 	 * Let x and y be two objects of type T. If x - y is a valid expression
-	 * which doesn't return void, then difference_type<T> = decltype(x - y).
-	 * Else, if T declares a member type called difference_type, then
+	 * which returns an integer, then difference_type<T> = decltype(x - y).
+	 * Else, if T declares an integral member type called difference_type, then
 	 * difference_type<T> = typename T::difference_type. Otherwise,
 	 * difference_type<T> does not represent a valid type
 	 */
-	using difference_type =
-		typename _details::diff_t<T, _details::is_subtractible<T>::value>::type;
+	using difference_type = typename incrementable_traits<T>::difference_type;
 
 	template <class T, class = void>
 	/**

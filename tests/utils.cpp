@@ -118,7 +118,9 @@ int main(int argc, char const *argv[]) {
 	};
 	static_assert(
 		std::is_same<libstra::difference_type<Foo>, int>::value &&
-			std::is_same<libstra::difference_type<Bar>, long long>::value,
+			std::is_same<libstra::difference_type<Bar>, long long>::value &&
+			std::is_same<std::ptrdiff_t,
+						 libstra::difference_type<int *>>::value,
 		"difference_type test failed");
 	static_assert(libstra::is_invocable_v<int(int), int> &&
 					  libstra::is_invocable_v<int (*)()> &&
@@ -146,6 +148,3 @@ struct has_diff_t : std::false_type {};
 template <class T>
 struct has_diff_t<T, std::void_t<libstra::difference_type<T>>>
 	: std::true_type {};
-
-static_assert(has_diff_t<double>::value && !has_diff_t<void>::value,
-			  "difference_type test failed");
