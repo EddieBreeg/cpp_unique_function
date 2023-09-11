@@ -609,4 +609,17 @@ namespace libstra {
 	template <class T, class... Args>
 	static constexpr bool is_invocable_v = is_invocable<T, Args...>::value;
 
+	template <class T>
+	struct is_cv_qualified : std::false_type {};
+
+	template <class T>
+	struct is_cv_qualified<const T> : std::true_type {};
+	template <class T>
+	struct is_cv_qualified<volatile T> : std::true_type {};
+	template <class T>
+	struct is_cv_qualified<const volatile T> : std::true_type {};
+
+	template <class T>
+	static constexpr bool is_cv_qualified_v = is_cv_qualified<T>::value;
+
 } // namespace libstra
