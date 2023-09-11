@@ -671,4 +671,17 @@ namespace libstra {
 	template <class T, class... U>
 	static constexpr bool is_one_of_v = is_one_of<T, U...>::value;
 
+	template <class T>
+	struct is_cv_qualified : std::false_type {};
+
+	template <class T>
+	struct is_cv_qualified<const T> : std::true_type {};
+	template <class T>
+	struct is_cv_qualified<volatile T> : std::true_type {};
+	template <class T>
+	struct is_cv_qualified<const volatile T> : std::true_type {};
+
+	template <class T>
+	static constexpr bool is_cv_qualified_v = is_cv_qualified<T>::value;
+
 } // namespace libstra
