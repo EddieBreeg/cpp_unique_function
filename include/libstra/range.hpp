@@ -122,9 +122,10 @@ namespace libstra {
 		}
 	};
 
-	template <class T, class = std::enable_if_t<std::is_object<T>::value>>
+	template <class T>
 	class empty_view : public view_interface<empty_view<T>> {
 	public:
+		static_assert(std::is_object<T>::value, "T must be an object type");
 		constexpr empty_view() noexcept = default;
 		static constexpr T *begin() noexcept { return nullptr; }
 		static constexpr T *end() noexcept { return nullptr; }
@@ -134,4 +135,5 @@ namespace libstra {
 		}
 		constexpr T *data() const noexcept { return nullptr; }
 	};
+
 } // namespace libstra
