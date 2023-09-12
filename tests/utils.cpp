@@ -141,6 +141,23 @@ int main(int argc, char const *argv[]) {
 					  libstra::nth_value<1, 0, 'a', 3ULL> == 'a',
 				  "nth_value test failed");
 #endif
+
+	static_assert(libstra::is_weakly_incrementable_v<int> &&
+					  libstra::is_weakly_incrementable_v<int *> &&
+					  !libstra::is_weakly_incrementable_v<void *> &&
+					  !libstra::is_weakly_incrementable_v<double>,
+				  "weakly incrementable test failed");
+	{
+		struct D {
+			D(int){};
+		};
+		static_assert(libstra::is_semiregular_v<bool> &&
+						  !libstra::is_semiregular_v<D>,
+					  "semiregular test failed");
+	}
+	static_assert(
+		libstra::_details::advanceable<std::vector<int>::iterator>::value &&
+		libstra::_details::advanceable<const int *>::value);
 }
 
 template <class T, class = void>
@@ -148,3 +165,6 @@ struct has_diff_t : std::false_type {};
 template <class T>
 struct has_diff_t<T, std::void_t<libstra::difference_type<T>>>
 	: std::true_type {};
+
+static_assert(has_diff_t<std::list<int>::iterator>::value,
+			  "difference_type test failed");
