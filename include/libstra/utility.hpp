@@ -680,9 +680,11 @@ namespace libstra {
 	struct is_iterable : std::false_type {};
 
 	namespace _details {
+
 		template <class T>
 		using begin_t = decltype(std::begin(
 			std::declval<std::add_lvalue_reference_t<T>>()));
+
 		template <class T>
 		using end_t =
 			decltype(std::end(std::declval<std::add_lvalue_reference_t<T>>()));
@@ -819,4 +821,36 @@ namespace libstra {
 	template <class T>
 	static constexpr bool is_semiregular_v =
 		std::is_default_constructible<T>::value && is_copyable_v<T>;
+	template <class T>
+	static constexpr bool is_regular_v =
+		is_semiregular_v<T> && is_equality_comparable_v<T, T>;
+
+	namespace _details {
+		template <class T, class = void>
+		struct incrementable : std::false_type {};
+		template <class T>
+		struct incrementable<
+			T, std::enable_if_t<
+				   is_regular_v<T> && is_weakly_incrementable_v<T> &&
+				   std::is_same<decltype(std::declval<T>()++), T>::value>>
+			: std::true_type {};
+
+		template <class T, class = void>
+		struct decrementable : std::false_type {};
+		template <class T>
+		struct decrementable<
+			T, std::enable_if_t<
+				   incrementable<T>::value && is_weakly_incrementable_v<T> &&
+				   std::is_same<decltype(std::declval<T>()--), T>::value>>
+			: std::true_type {};
+
+	} // namespace _details
+
+	template <class T>
+	static constexpr bool is_incrementable_v =
+		_details::incrementable<T>::value;
+	template <class T>
+	static constexpr bool is_decrementable_v =
+		_details::decrementable<T>::value;
+
 } // namespace libstra
