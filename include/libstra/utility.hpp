@@ -246,6 +246,13 @@ namespace libstra {
 		template <class T>
 		using member_access_t = typename member_access<T>::type;
 
+		template <class T, class U, class = void>
+		struct is_eq_comp_t : std::false_type {};
+		template <class T, class U>
+		struct is_eq_comp_t<
+			T, U, std::void_t<decltype(std::declval<T>() == std::declval<U>())>>
+			: std::true_type {};
+
 	} // namespace _details
 
 	template <class T, class = void>
@@ -371,6 +378,14 @@ namespace libstra {
 	 */
 	struct is_bidirectional_iterator : std::false_type {};
 
+	/**
+	 * If the type T is a reference type, remove_cv_ref_t is a typedef
+	 * which is the type referred to by T with its topmost cv-qualifiers
+	 * removed. Otherwise type is T with its topmost cv-qualifiers removed.
+	 */
+	template <class T>
+	using remove_cv_ref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
 	template <class T>
 	/**
 	 * Let x be an object of type T. is_forward_iterator declares a static
@@ -431,21 +446,102 @@ namespace libstra {
 
 	} // namespace _details
 
+	/**
+	 * If T has an integral member type called difference_type,
+	 * incrementable_traits also declares such a member.
+	 * Otherwise, given x and y two objects of type T, incrementable_traits
+	 * declares the difference_type member type if and only if x - y is a valid
+	 * expression which returns an integer.
+	 *
+	 * In all other cases, incrementable_traits is an empty struct.
+	 */
 	template <class T>
 	struct incrementable_traits : _details::inc_traits<T> {};
 
+	/**
+	 * If T has an integral member type called difference_type,
+	 * incrementable_traits also declares such a member.
+	 * Otherwise, given x and y two objects of type T, incrementable_traits
+	 * declares the difference_type member type if and only if x - y is a valid
+	 * expression which returns an integer.
+	 *
+	 * In all other cases, incrementable_traits is an empty struct.
+	 */
 	template <class T>
 	struct incrementable_traits<const T> : incrementable_traits<T> {};
 
 	template <class T>
 	/**
-	 * Let x and y be two objects of type T. If x - y is a valid expression
-	 * which returns an integer, then difference_type<T> = decltype(x - y).
-	 * Else, if T declares an integral member type called difference_type, then
-	 * difference_type<T> = typename T::difference_type. Otherwise,
-	 * difference_type<T> does not represent a valid type
+	 * Type alias for incrementable_traits<remove_cv_ref_t<T>>::difference_type
 	 */
-	using difference_type = typename incrementable_traits<T>::difference_type;
+	using difference_type =
+		typename incrementable_traits<remove_cv_ref_t<T>>::difference_type;
+
+	namespace _details {
+
+		template <class T, class = void>
+		struct totally_ordered : std::false_type {};
+		template <class T>
+		struct totally_ordered<
+			T, std::void_t<eq_t<T>, neq_t<T>,
+						   decltype(std::declval<T>() < std::declval<T>()),
+						   decltype(std::declval<T>() <= std::declval<T>()),
+						   decltype(std::declval<T>() >= std::declval<T>()),
+						   decltype(std::declval<T>() > std::declval<T>())>>
+			: std::true_type {};
+
+		template <class T, class = void>
+		struct is_weakly_inc : std::false_type {};
+		template <class T>
+		struct is_weakly_inc<
+			T, std::void_t<
+				   postinc_t<T>,
+				   std::enable_if_t<
+					   std::is_same<preinc_t<T>, T &>::value &&
+					   std::is_signed<libstra::difference_type<T>>::value>>>
+			: std::true_type {};
+		template <class T, class = void>
+		struct is_weakly_dec : std::false_type {};
+		template <class T>
+		struct is_weakly_dec<
+			T, std::void_t<
+				   postdec_t<T>,
+				   std::enable_if_t<
+					   std::is_same<predec_t<T>, T &>::value &&
+					   std::is_signed<libstra::difference_type<T>>::value>>>
+			: std::true_type {};
+
+		template <class T, class = void>
+		struct advanceable : std::false_type {};
+		template <class T>
+		struct advanceable<
+			T,
+			std::void_t<
+				decltype(T(std::declval<T>() +
+						   std::declval<libstra::difference_type<T>>())),
+				decltype(T(std::declval<libstra::difference_type<T>>() +
+						   std::declval<T>())),
+				decltype(T(std::declval<T>() -
+						   std::declval<libstra::difference_type<T>>())),
+				std::enable_if_t<
+					totally_ordered<T>::value && is_weakly_inc<T>::value &&
+					is_weakly_dec<T>::value &&
+					std::is_same<
+						T &,
+						decltype(std::declval<
+									 std::add_lvalue_reference_t<T>>() +=
+								 std::declval<difference_type<T>>())>::value &&
+					std::is_same<
+						T &,
+						decltype(std::declval<
+									 std::add_lvalue_reference_t<T>>() -=
+								 std::declval<difference_type<T>>())>::value>>>
+			: std::true_type {};
+	} // namespace _details
+
+	template <class T>
+	static constexpr bool is_totally_ordered_v =
+		_details::totally_ordered<T>::value;
 
 	template <class T, class = void>
 	/**
@@ -620,6 +716,10 @@ namespace libstra {
 
 	} // namespace _details
 
+	template <class T, class U>
+	static constexpr bool is_equality_comparable_v =
+		_details::is_eq_comp_t<T, U>::value;
+
 	template <class T, class... Args>
 	struct is_invocable
 		: _details::invokable_with<T, _details::Pack_t<Args...>> {};
@@ -640,4 +740,21 @@ namespace libstra {
 	template <class T>
 	static constexpr bool is_cv_qualified_v = is_cv_qualified<T>::value;
 
+	template <class T>
+	static constexpr bool is_weakly_incrementable_v =
+		_details::is_weakly_inc<T>::value;
+	template <class T>
+	static constexpr bool is_weakly_decrementable_v =
+		_details::is_weakly_dec<T>::value;
+
+	template <class T>
+	static constexpr bool is_copyable_v =
+		std::is_copy_assignable<T>::value &&
+		std::is_move_assignable<T>::value &&
+		std::is_copy_constructible<T>::value &&
+		std::is_move_constructible<T>::value;
+
+	template <class T>
+	static constexpr bool is_semiregular_v =
+		std::is_default_constructible<T>::value && is_copyable_v<T>;
 } // namespace libstra
