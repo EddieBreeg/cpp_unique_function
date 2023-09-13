@@ -311,6 +311,12 @@ namespace libstra {
 
 	namespace _details {
 		template <class T, class = void>
+		struct dereferenceable : std::false_type {};
+		template <class T>
+		struct dereferenceable<T, std::void_t<dereference_t<T>>>
+			: std::true_type {};
+
+		template <class T, class = void>
 		struct has_value_type : std::false_type {};
 		template <class T>
 		struct has_value_type<T, std::void_t<typename T::value_type>>
@@ -322,13 +328,56 @@ namespace libstra {
 		struct has_element_type<T, std::void_t<typename T::element_type>>
 			: std::true_type {};
 
-		template <class T, class V = typename std::iterator_traits<
-							   remove_cv_ref_t<T>>::value_type>
-		struct iter_value : type_identity<V> {};
+		template <class T, bool = false, class = void>
+		struct indirectly_readable_traits {};
+		template <class T>
+		struct indirectly_readable_traits<T *, false> {
+			using value_type = std::remove_cv_t<T>;
+		};
+		template <class T>
+		struct indirectly_readable_traits<const T, false>
+			: indirectly_readable_traits<T> {};
+		template <class T>
+		struct indirectly_readable_traits<
+			T, false, std::enable_if_t<std::is_array<T>::value>> {
+			using value_type = std::remove_cv_t<std::remove_extent_t<T>>;
+		};
+		template <class T>
+		struct indirectly_readable_traits<
+			T, false,
+			std::enable_if_t<dereferenceable<T>::value &&
+							 has_value_type<T>::value>> {
+			using value_type = std::remove_cv_t<typename T::value_type>;
+		};
+		template <class T>
+		struct indirectly_readable_traits<
+			T, false,
+			std::void_t<dereference_t<T>,
+						std::enable_if_t<has_element_type<T>::value, int>>> {
+			using value_type = std::remove_cv_t<typename T::element_type>;
+		};
+		template <class T>
+		struct indirectly_readable_traits<
+			T, true,
+			std::void_t<dereference_t<T>,
+						std::enable_if_t<
+							std::is_same<typename T::value_type,
+										 typename T::element_type>::value>>> {
+			using value_type = std::remove_cv_t<typename T::value_type>;
+		};
 
 	} // namespace _details
 
 	template <class T>
-	using iter_value_t = typename _details::iter_value<T>::type;
+	struct indirectly_readable_traits
+		: _details::indirectly_readable_traits<
+			  T, _details::has_element_type<T>::value &&
+					 _details::has_value_type<T>::value> {};
+
+	template <class T>
+	using iter_value_t = std::conditional_t<
+		_details::has_value_type<std::iterator_traits<T>>::value,
+		typename std::iterator_traits<T>::value_type,
+		typename indirectly_readable_traits<T>::value_type>;
 
 } // namespace libstra

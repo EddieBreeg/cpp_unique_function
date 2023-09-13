@@ -12,8 +12,30 @@ int main(int argc, char const *argv[]) {
 			using value_type = double;
 			using element_type = int;
 		};
-		static_assert(libstra::_details::has_value_type<A>::value &&
-					  libstra::_details::has_element_type<A>::value);
+		static_assert(!libstra::_details::has_value_type<
+						  libstra::indirectly_readable_traits<A>>::value,
+					  "indirectly_readable_traits test failed");
+		struct B {
+			using value_type = int;
+			constexpr int operator*() const { return 0; }
+		};
+		struct C {
+			using element_type = float;
+			constexpr float operator*() const { return 0.0f; }
+		};
+		struct D {
+			using value_type = double;
+			using element_type = double;
+			constexpr double operator*() const { return 0.0; }
+		};
+		static_assert(
+			std::is_same<libstra::indirectly_readable_traits<B>::value_type,
+						 int>::value &&
+				std::is_same<libstra::indirectly_readable_traits<C>::value_type,
+							 float>::value &&
+				std::is_same<libstra::indirectly_readable_traits<D>::value_type,
+							 double>::value,
+			"indirectly_readable_traits test failed");
 	}
 	struct A {
 		int val = 0;
@@ -90,4 +112,9 @@ int main(int argc, char const *argv[]) {
 					  libstra::is_iterable_v<libstra::static_vector<A, 3>> &&
 					  libstra::is_iterable_v<libstra::array_view<void *>>,
 				  "is_iterable test failed");
+
+	static_assert(
+		std::is_same<int, libstra::iter_value_t<int *>>::value &&
+			std::is_same<int, libstra::iter_value_t<const int *>>::value,
+		"iter_value_t test failed");
 }
