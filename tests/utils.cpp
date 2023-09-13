@@ -89,7 +89,8 @@ int main(int argc, char const *argv[]) {
 	}
 	static_assert(
 		libstra::_details::advanceable<std::vector<int>::iterator>::value &&
-		libstra::_details::advanceable<const int *>::value);
+			libstra::_details::advanceable<const int *>::value,
+		"advanceable trait test failed");
 }
 
 template <class T, class = void>
