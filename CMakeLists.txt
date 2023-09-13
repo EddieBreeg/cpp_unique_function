@@ -66,6 +66,8 @@ target_link_libraries(static_vector_tests PRIVATE libstra)
 
 add_executable(range_tests tests/ranges.cpp)
 target_link_libraries(range_tests PRIVATE libstra)
+add_executable(iterator_tests tests/iterators.cpp)
+target_link_libraries(iterator_tests PRIVATE libstra)
 
 add_test(NAME UniqueFuntion COMMAND unique_function_test)
 add_test(NAME Storage COMMAND storage_test)
@@ -78,6 +80,7 @@ add_test(NAME Memory COMMAND memory_tests)
 add_test(NAME Views COMMAND views_tests)
 add_test(NAME StaticVector COMMAND static_vector_tests)
 add_test(NAME Range COMMAND range_tests)
+add_test(NAME Iterators COMMAND iterator_tests)
 
     
 endif(${BUILD_TESTING})
