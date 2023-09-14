@@ -489,4 +489,101 @@ namespace libstra {
 	struct type_identity {
 		using type = T;
 	};
+
+	template <class Adv>
+	class basic_reverse_advanceable {
+		Adv _val{};
+
+	public:
+		static_assert(_details::advanceable<Adv>::value && is_copyable_v<Adv>,
+					  "Adv must be advanceable and copyable");
+		constexpr basic_reverse_advanceable() = default;
+
+		template <class T = Adv, class = std::enable_if_t<
+									 std::is_constructible<Adv, T>::value>>
+		constexpr basic_reverse_advanceable(T &&x) : _val(std::forward<T>(x)) {}
+
+		[[nodiscard]] constexpr operator Adv() const { return _val; }
+
+		constexpr basic_reverse_advanceable &operator++() {
+			--_val;
+			return *this;
+		}
+		constexpr basic_reverse_advanceable &operator--() {
+			++_val;
+			return *this;
+		}
+		constexpr basic_reverse_advanceable operator++(int) { return _val--; }
+		constexpr basic_reverse_advanceable operator--(int) { return _val++; }
+		[[nodiscard]]
+		constexpr basic_reverse_advanceable
+		operator+(difference_type<Adv> n) const {
+			return _val - n;
+		}
+		[[nodiscard]]
+		constexpr basic_reverse_advanceable
+		operator-(difference_type<Adv> n) const {
+			return _val + n;
+		}
+		[[nodiscard]]
+		constexpr difference_type<Adv>
+		operator-(const basic_reverse_advanceable &other) const {
+			return other._val - _val;
+		}
+		[[nodiscard]]
+		constexpr basic_reverse_advanceable &
+		operator+=(difference_type<Adv> n) {
+			_val -= n;
+			return *this;
+		}
+		[[nodiscard]]
+		constexpr basic_reverse_advanceable &
+		operator-=(difference_type<Adv> n) {
+			_val += n;
+			return *this;
+		}
+		template <class T = Adv,
+				  class = std::enable_if_t<is_equality_comparable_v<T, Adv>>>
+		[[nodiscard]]
+		constexpr bool
+		operator==(const basic_reverse_advanceable<T> &other) const {
+			return other._val == _val;
+		}
+		template <class T = Adv,
+				  class = std::enable_if_t<is_equality_comparable_v<T, Adv>>>
+		[[nodiscard]]
+		constexpr bool
+		operator!=(const basic_reverse_advanceable<T> &other) const {
+			return !(other._val == _val);
+		}
+		template <class T = Adv,
+				  class = std::enable_if_t<is_totally_ordered_v<T>>>
+		[[nodiscard]]
+		constexpr bool
+		operator<(const basic_reverse_advanceable &other) const {
+			return _val > other._val;
+		}
+		template <class T = Adv,
+				  class = std::enable_if_t<is_totally_ordered_v<T>>>
+		[[nodiscard]]
+		constexpr bool
+		operator<=(const basic_reverse_advanceable &other) const {
+			return _val >= other._val;
+		}
+		template <class T = Adv,
+				  class = std::enable_if_t<is_totally_ordered_v<T>>>
+		[[nodiscard]]
+		constexpr bool
+		operator>=(const basic_reverse_advanceable &other) const {
+			return _val <= other._val;
+		}
+		template <class T = Adv,
+				  class = std::enable_if_t<is_totally_ordered_v<T>>>
+		[[nodiscard]]
+		constexpr bool
+		operator>(const basic_reverse_advanceable &other) const {
+			return _val < other._val;
+		}
+	};
+
 } // namespace libstra
