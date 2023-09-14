@@ -197,7 +197,9 @@ namespace libstra {
 
 		template <class T, class = void>
 		struct member_access {
-			using type = decltype(std::declval<T>().operator->());
+			using type = decltype(std::declval<std::add_lvalue_reference_t<T>>()
+									  .
+									  operator->());
 		};
 		template <class T>
 		struct member_access<T, std::enable_if_t<std::is_pointer<T>::value &&

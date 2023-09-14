@@ -117,4 +117,35 @@ int main(int argc, char const *argv[]) {
 		std::is_same<int, libstra::iter_value_t<int *>>::value &&
 			std::is_same<int, libstra::iter_value_t<const int *>>::value,
 		"iter_value_t test failed");
+	static_assert(
+		std::is_same<int &, libstra::iter_reference_t<int *>>::value &&
+			std::is_same<const int &,
+						 libstra::iter_reference_t<const int *>>::value,
+		"iter_reference_t test failed");
+	static_assert(
+		std::is_same<libstra::iter_difference_t<int *>, std::ptrdiff_t>::value,
+		"iter_difference_t test failed");
+
+	{
+		using const_iter_t = libstra::basic_const_iterator<int *>;
+		static_assert(std::is_same<std::random_access_iterator_tag,
+								   const_iter_t::iterator_category>::value,
+					  "basic_const_iterator test failed");
+		constexpr const_iter_t it;
+		static_assert(std::is_same<decltype(*it), const int &>::value,
+					  "basic_const_iterator test failed");
+	}
+	{
+		struct Foo {
+			int x = 0;
+		};
+		using const_iter_t = libstra::basic_const_iterator<Foo *>;
+		static_assert(
+			libstra::_details::has_member_access_method<const_iter_t>::value,
+			"basic_const_iterator test failed");
+		constexpr const_iter_t iter;
+		static_assert(
+			std::is_same<const Foo *, decltype(iter.operator->())>::value,
+			"basic_const_iterator test failed");
+	}
 }
