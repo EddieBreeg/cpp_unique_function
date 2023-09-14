@@ -439,7 +439,7 @@ namespace libstra {
 	template <class Iter>
 	class basic_const_iterator
 		: public _details::const_iter_base<Iter, is_forward_iterator_v<Iter>> {
-		_details::make_const_t<Iter> _i{};
+		Iter _i{};
 
 		using reference =
 			typename _details::make_const_t<iter_reference_t<Iter>>;
@@ -571,6 +571,160 @@ namespace libstra {
 		constexpr basic_const_iterator::reference
 		operator[](iter_difference_t<Iter> n) const {
 			return _i[n];
+		}
+	};
+
+	namespace _details {
+		template <class Iter, class = void>
+		struct reverse_iter_base {
+			static_assert(is_iterator_v<Iter> &&
+							  is_weakly_decrementable_v<Iter>,
+						  "Iter must be a weakly decrementable iterator type");
+		};
+		template <class Iter>
+		struct reverse_iter_base<
+			Iter,
+			std::void_t<typename std::iterator_traits<Iter>::iterator_category>>
+			: std::iterator_traits<Iter> {
+			static_assert(is_iterator_v<Iter> &&
+							  is_weakly_decrementable_v<Iter>,
+						  "Iter must be a weakly decrementable iterator type");
+		};
+	} // namespace _details
+
+	template <class Iter>
+	class basic_reverse_iterator : _details::reverse_iter_base<Iter> {
+		Iter _i{};
+		using const_reference = _details::make_const_t<iter_reference_t<Iter>>;
+
+	public:
+		constexpr basic_reverse_iterator() = default;
+		template <class I = Iter, class = std::enable_if_t<
+									  std::is_constructible<Iter, I>::value>>
+		constexpr basic_reverse_iterator(I &&it) : _i{ it } {}
+
+		constexpr iter_reference_t<Iter> operator*() { return *_i; }
+		constexpr basic_reverse_iterator::const_reference operator*() const {
+			return *_i;
+		}
+
+		template <class I = Iter,
+				  std::enable_if_t<_details::has_member_access_method<I>::value,
+								   int> = 0>
+		constexpr _details::member_access_t<Iter> operator->() {
+			return _i.operator->();
+		}
+		template <class I = Iter,
+				  std::enable_if_t<std::is_pointer<I>::value, int> = 0>
+		constexpr Iter operator->() {
+			return _i;
+		}
+		template <class I = Iter,
+				  std::enable_if_t<_details::has_member_access_method<I>::value,
+								   int> = 0>
+		constexpr _details::make_const_t<_details::member_access_t<Iter>>
+		operator->() const {
+			return _i.operator->();
+		}
+		template <class I = Iter,
+				  std::enable_if_t<std::is_pointer<I>::value, int> = 0>
+		constexpr _details::make_const_t<Iter> operator->() const {
+			return _i;
+		}
+
+		[[nodiscard]]
+		constexpr bool
+		operator==(const basic_reverse_iterator &other) const {
+			return _i == other._i;
+		}
+		[[nodiscard]]
+		constexpr bool
+		operator!=(const basic_reverse_iterator &other) const {
+			return _i != other._i;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<is_totally_ordered_v<I>>>
+		[[nodiscard]]
+		constexpr bool
+		operator<(const basic_reverse_iterator &other) {
+			return _i < other._i;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<is_totally_ordered_v<I>>>
+		[[nodiscard]]
+		constexpr bool
+		operator>(const basic_reverse_iterator &other) {
+			return _i > other._i;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<is_totally_ordered_v<I>>>
+		[[nodiscard]]
+		constexpr bool
+		operator<=(const basic_reverse_iterator &other) {
+			return _i <= other._i;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<is_totally_ordered_v<I>>>
+		[[nodiscard]]
+		constexpr bool
+		operator>=(const basic_reverse_iterator &other) {
+			return _i >= other._i;
+		}
+
+		constexpr basic_reverse_iterator &operator++() {
+			--_i;
+			return *this;
+		}
+		constexpr basic_reverse_iterator &operator--() {
+			++_i;
+			return *this;
+		}
+		constexpr basic_reverse_iterator operator++(int) { return --_i; }
+		constexpr basic_reverse_iterator operator--(int) { return ++_i; }
+
+		template <class I = Iter,
+				  class = std::enable_if_t<_details::advanceable<I>::value>>
+		constexpr basic_reverse_iterator
+		operator+(iter_difference_t<Iter> n) const {
+			return _i - n;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<_details::advanceable<I>::value>>
+		constexpr basic_reverse_iterator
+		operator-(iter_difference_t<Iter> n) const {
+			return _i + n;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<_details::advanceable<I>::value>>
+		constexpr basic_reverse_iterator &
+		operator+=(iter_difference_t<Iter> n) {
+			_i -= n;
+			return *this;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<_details::advanceable<I>::value>>
+		constexpr basic_reverse_iterator &
+		operator-=(iter_difference_t<Iter> n) {
+			_i += n;
+			return *this;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<_details::advanceable<I>::value>>
+		constexpr iter_difference_t<Iter>
+		operator-(const basic_reverse_iterator &other) {
+			return other._i - _i;
+		}
+
+		template <class I = Iter,
+				  std::enable_if_t<is_random_access_iterator_v<I>, int> = 0>
+		constexpr iter_reference_t<Iter> operator[](iter_difference_t<Iter> n) {
+			return *(_i - n);
+		}
+		template <class I = Iter,
+				  std::enable_if_t<is_random_access_iterator_v<I>, int> = 0>
+		constexpr basic_reverse_iterator::const_reference
+		operator[](iter_difference_t<Iter> n) const {
+			return *(_i - n);
 		}
 	};
 

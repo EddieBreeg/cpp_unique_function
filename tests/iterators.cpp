@@ -5,6 +5,7 @@
 #include <list>
 #include <libstra/static_vector.hpp>
 #include <libstra/views.hpp>
+#include <cassert>
 
 int main(int argc, char const *argv[]) {
 	{
@@ -144,6 +145,7 @@ int main(int argc, char const *argv[]) {
 			libstra::_details::has_member_access_method<const_iter_t>::value,
 			"basic_const_iterator test failed");
 		constexpr const_iter_t iter;
+		static_assert(iter == nullptr, "basic_const_iterator test failed");
 		static_assert(
 			std::is_same<const Foo *, decltype(iter.operator->())>::value,
 			"basic_const_iterator test failed");
@@ -152,5 +154,37 @@ int main(int argc, char const *argv[]) {
 				std::is_same<const_iter_t, decltype(iter - 0)>::value &&
 				std::is_same<const Foo &, decltype(iter[0])>::value,
 			"basic_const_iterator test failed");
+	}
+	{
+		struct Foo : std::iterator_traits<int *> {
+			int *_ptr;
+			Foo() = delete;
+			constexpr Foo(int *ptr) : _ptr(ptr) {}
+			constexpr reference operator*() { return *_ptr; }
+			constexpr pointer operator->() { return _ptr; }
+			constexpr Foo &operator++() {
+				++_ptr;
+				return *this;
+			}
+			constexpr Foo operator++(int) { return _ptr++; }
+			constexpr bool operator==(const Foo &other) const {
+				return _ptr == other._ptr;
+			}
+			constexpr bool operator!=(const Foo &other) const {
+				return _ptr != other._ptr;
+			}
+		};
+		using const_iter_t = libstra::basic_const_iterator<Foo>;
+		constexpr const_iter_t it = nullptr;
+	}
+	{
+		constexpr int X[] = { 0, 1, 12 };
+
+		using RIter = libstra::basic_reverse_iterator<decltype(std::end(X))>;
+		RIter it = std::end(X);
+		assert(it == std::end(X));
+		assert((it + 1) == (std::end(X) - 1));
+		++it;
+		assert(it[2] == 0);
 	}
 }
