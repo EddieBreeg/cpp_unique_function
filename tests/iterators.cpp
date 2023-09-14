@@ -147,5 +147,10 @@ int main(int argc, char const *argv[]) {
 		static_assert(
 			std::is_same<const Foo *, decltype(iter.operator->())>::value,
 			"basic_const_iterator test failed");
+		static_assert(
+			std::is_same<const_iter_t, decltype(iter + 0)>::value &&
+				std::is_same<const_iter_t, decltype(iter - 0)>::value &&
+				std::is_same<const Foo &, decltype(iter[0])>::value,
+			"basic_const_iterator test failed");
 	}
 }
