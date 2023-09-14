@@ -598,6 +598,7 @@ namespace libstra {
 		using const_reference = _details::make_const_t<iter_reference_t<Iter>>;
 
 	public:
+		constexpr operator Iter() const { return _i; }
 		constexpr basic_reverse_iterator() = default;
 		template <class I = Iter, class = std::enable_if_t<
 									  std::is_constructible<Iter, I>::value>>
