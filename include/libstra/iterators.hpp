@@ -3,6 +3,95 @@
 #include "utility.hpp"
 
 namespace libstra {
+
+	namespace _details {
+		template <class T, class = void>
+		struct dereferenceable : std::false_type {};
+		template <class T>
+		struct dereferenceable<T, std::void_t<dereference_t<T>>>
+			: std::true_type {};
+
+		template <class T, class = void>
+		struct has_value_type : std::false_type {};
+		template <class T>
+		struct has_value_type<T, std::void_t<typename T::value_type>>
+			: std::true_type {};
+
+		template <class T, class = void>
+		struct has_element_type : std::false_type {};
+		template <class T>
+		struct has_element_type<T, std::void_t<typename T::element_type>>
+			: std::true_type {};
+
+		template <class T, bool = false, class = void>
+		struct indirectly_readable_traits {};
+		template <class T>
+		struct indirectly_readable_traits<T *, false> {
+			using value_type = std::remove_cv_t<T>;
+		};
+		template <class T>
+		struct indirectly_readable_traits<const T, false>
+			: indirectly_readable_traits<T> {};
+		template <class T>
+		struct indirectly_readable_traits<
+			T, false, std::enable_if_t<std::is_array<T>::value>> {
+			using value_type = std::remove_cv_t<std::remove_extent_t<T>>;
+		};
+		template <class T>
+		struct indirectly_readable_traits<
+			T, false,
+			std::enable_if_t<dereferenceable<T>::value &&
+							 has_value_type<T>::value>> {
+			using value_type = std::remove_cv_t<typename T::value_type>;
+		};
+		template <class T>
+		struct indirectly_readable_traits<
+			T, false,
+			std::void_t<dereference_t<T>,
+						std::enable_if_t<has_element_type<T>::value, int>>> {
+			using value_type = std::remove_cv_t<typename T::element_type>;
+		};
+		template <class T>
+		struct indirectly_readable_traits<
+			T, true,
+			std::void_t<dereference_t<T>,
+						std::enable_if_t<
+							std::is_same<typename T::value_type,
+										 typename T::element_type>::value>>> {
+			using value_type = std::remove_cv_t<typename T::value_type>;
+		};
+
+	} // namespace _details
+
+	template <class T>
+	struct indirectly_readable_traits
+		: _details::indirectly_readable_traits<
+			  T, _details::has_element_type<T>::value &&
+					 _details::has_value_type<T>::value> {};
+
+	template <class T>
+	using iter_value_t = std::conditional_t<
+		_details::has_value_type<
+			std::iterator_traits<remove_cv_ref_t<T>>>::value,
+		typename std::iterator_traits<remove_cv_ref_t<T>>::value_type,
+		typename indirectly_readable_traits<remove_cv_ref_t<T>>::value_type>;
+
+	template <class T>
+	using iter_reference_t = dereference_t<std::add_lvalue_reference_t<T>>;
+
+	namespace _details {
+		template <class T, class = void>
+		struct has_diff_t : std::false_type {};
+		template <class T>
+		struct has_diff_t<T, typename T::difference_type> : std::true_type {};
+	} // namespace _details
+
+	template <class T>
+	using iter_difference_t = std::conditional_t<
+		_details::has_diff_t<std::iterator_traits<remove_cv_ref_t<T>>>::value,
+		typename std::iterator_traits<remove_cv_ref_t<T>>::difference_type,
+		difference_type<remove_cv_ref_t<T>>>;
+
 	/**
 	 * If T satisfies the requirements of LegacyIterator, declares a static
 	 * boolean constant equal to true. Otherwise, the same static
@@ -310,74 +399,139 @@ namespace libstra {
 	static constexpr bool is_iterable_v = is_iterable<T>::value;
 
 	namespace _details {
-		template <class T, class = void>
-		struct dereferenceable : std::false_type {};
+		template <class Iter, bool = true>
+		struct const_iter_base {
+		public:
+			using iterator_category =
+				typename std::iterator_traits<Iter>::iterator_category;
+		};
+		template <class Iter>
+		struct const_iter_base<Iter, false> {
+		public:
+			static_assert(is_input_iterator_v<Iter>,
+						  "Iter must be an input iterator type");
+		};
 		template <class T>
-		struct dereferenceable<T, std::void_t<dereference_t<T>>>
-			: std::true_type {};
+		struct make_const : type_identity<const T> {};
+		template <class T>
+		struct make_const<T *> : type_identity<const T *> {};
+		template <class T>
+		struct make_const<T &> : type_identity<const T &> {};
+		template <class T>
+		struct make_const<T &&> : type_identity<const T &&> {};
 
-		template <class T, class = void>
-		struct has_value_type : std::false_type {};
 		template <class T>
-		struct has_value_type<T, std::void_t<typename T::value_type>>
-			: std::true_type {};
+		struct make_const<const T> : make_const<T> {};
+		template <class T>
+		using make_const_t = typename make_const<T>::type;
 
-		template <class T, class = void>
-		struct has_element_type : std::false_type {};
-		template <class T>
-		struct has_element_type<T, std::void_t<typename T::element_type>>
-			: std::true_type {};
+		template <class Iter, class = void>
+		struct has_member_access_method : std::false_type {};
 
-		template <class T, bool = false, class = void>
-		struct indirectly_readable_traits {};
-		template <class T>
-		struct indirectly_readable_traits<T *, false> {
-			using value_type = std::remove_cv_t<T>;
-		};
-		template <class T>
-		struct indirectly_readable_traits<const T, false>
-			: indirectly_readable_traits<T> {};
-		template <class T>
-		struct indirectly_readable_traits<
-			T, false, std::enable_if_t<std::is_array<T>::value>> {
-			using value_type = std::remove_cv_t<std::remove_extent_t<T>>;
-		};
-		template <class T>
-		struct indirectly_readable_traits<
-			T, false,
-			std::enable_if_t<dereferenceable<T>::value &&
-							 has_value_type<T>::value>> {
-			using value_type = std::remove_cv_t<typename T::value_type>;
-		};
-		template <class T>
-		struct indirectly_readable_traits<
-			T, false,
-			std::void_t<dereference_t<T>,
-						std::enable_if_t<has_element_type<T>::value, int>>> {
-			using value_type = std::remove_cv_t<typename T::element_type>;
-		};
-		template <class T>
-		struct indirectly_readable_traits<
-			T, true,
-			std::void_t<dereference_t<T>,
-						std::enable_if_t<
-							std::is_same<typename T::value_type,
-										 typename T::element_type>::value>>> {
-			using value_type = std::remove_cv_t<typename T::value_type>;
-		};
-
+		template <class Iter>
+		struct has_member_access_method<
+			Iter, std::void_t<
+					  decltype(std::declval<std::add_lvalue_reference_t<Iter>>()
+								   .
+								   operator->())>> : std::true_type {};
 	} // namespace _details
 
-	template <class T>
-	struct indirectly_readable_traits
-		: _details::indirectly_readable_traits<
-			  T, _details::has_element_type<T>::value &&
-					 _details::has_value_type<T>::value> {};
+	template <class Iter>
+	class basic_const_iterator
+		: public _details::const_iter_base<Iter, is_forward_iterator_v<Iter>> {
+		_details::make_const_t<Iter> _i{};
 
-	template <class T>
-	using iter_value_t = std::conditional_t<
-		_details::has_value_type<std::iterator_traits<T>>::value,
-		typename std::iterator_traits<T>::value_type,
-		typename indirectly_readable_traits<T>::value_type>;
+		using reference =
+			typename _details::make_const_t<iter_reference_t<Iter>>;
+
+	public:
+		using value_type = iter_value_t<Iter>;
+		using difference_type = iter_difference_t<Iter>;
+
+		constexpr basic_const_iterator() = default;
+
+		template <class I = Iter, class = std::enable_if_t<
+									  std::is_constructible<Iter, I &&>::value>>
+		constexpr basic_const_iterator(I &&x) : _i{ std::forward<I>(x) } {}
+
+		constexpr basic_const_iterator &operator++() {
+			++_i;
+			return *this;
+		}
+		constexpr basic_const_iterator operator++(int) {
+			return basic_const_iterator(_i++);
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<is_bidirectional_iterator_v<I>>>
+		constexpr basic_const_iterator &operator--() {
+			--_i;
+			return *this;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<is_bidirectional_iterator_v<I>>>
+		constexpr basic_const_iterator operator--(int) {
+			return basic_const_iterator(_i--);
+		}
+
+		[[nodiscard]]
+		constexpr bool
+		operator==(const basic_const_iterator &other) const {
+			return _i == other._i;
+		}
+		[[nodiscard]]
+		constexpr bool
+		operator!=(const basic_const_iterator &other) const {
+			return _i != other._i;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<is_totally_ordered_v<I>>>
+		[[nodiscard]]
+		constexpr bool
+		operator<(const basic_const_iterator &other) {
+			return _i < other._i;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<is_totally_ordered_v<I>>>
+		[[nodiscard]]
+		constexpr bool
+		operator>(const basic_const_iterator &other) {
+			return _i > other._i;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<is_totally_ordered_v<I>>>
+		[[nodiscard]]
+		constexpr bool
+		operator<=(const basic_const_iterator &other) {
+			return _i <= other._i;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<is_totally_ordered_v<I>>>
+		[[nodiscard]]
+		constexpr bool
+		operator>=(const basic_const_iterator &other) {
+			return _i >= other._i;
+		}
+
+		[[nodiscard]]
+		constexpr basic_const_iterator::reference
+		operator*() const {
+			return *_i;
+		}
+		template <class I = Iter,
+				  std::enable_if_t<_details::has_member_access_method<I>::value,
+								   int> = 0>
+		[[nodiscard]]
+		constexpr _details::make_const_t<_details::member_access_t<Iter>>
+		operator->() const {
+			return _i.operator->();
+		}
+		template <class I = Iter,
+				  std::enable_if_t<std::is_pointer<I>::value, int> = 0>
+		[[nodiscard]]
+		constexpr _details::make_const_t<Iter>
+		operator->() const {
+			return _i;
+		}
+	};
 
 } // namespace libstra

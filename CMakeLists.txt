@@ -2,9 +2,7 @@ cmake_minimum_required(VERSION 3.2...3.5)
 project(libstra VERSION 1.0.0)
 
 
-if(${MSVC})
-    add_compile_options(/Wall)
-    else()    
+if(NOT ${MSVC})
     add_compile_options(-Wall)
 endif(${MSVC})
 
