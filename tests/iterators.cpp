@@ -179,12 +179,12 @@ int main(int argc, char const *argv[]) {
 	}
 	{
 		constexpr int X[] = { 0, 1, 12 };
-
 		using RIter = libstra::basic_reverse_iterator<decltype(std::end(X))>;
 		RIter it = std::end(X);
 		assert(it == std::end(X));
 		assert((it + 1) == (std::end(X) - 1));
 		++it;
 		assert(it[2] == 0);
+		assert(it < RIter(std::begin(X)));
 	}
 }

@@ -647,28 +647,28 @@ namespace libstra {
 		[[nodiscard]]
 		constexpr bool
 		operator<(const basic_reverse_iterator &other) {
-			return _i < other._i;
-		}
-		template <class I = Iter,
-				  class = std::enable_if_t<is_totally_ordered_v<I>>>
-		[[nodiscard]]
-		constexpr bool
-		operator>(const basic_reverse_iterator &other) {
 			return _i > other._i;
 		}
 		template <class I = Iter,
 				  class = std::enable_if_t<is_totally_ordered_v<I>>>
 		[[nodiscard]]
 		constexpr bool
+		operator>(const basic_reverse_iterator &other) {
+			return _i < other._i;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<is_totally_ordered_v<I>>>
+		[[nodiscard]]
+		constexpr bool
 		operator<=(const basic_reverse_iterator &other) {
-			return _i <= other._i;
+			return _i >= other._i;
 		}
 		template <class I = Iter,
 				  class = std::enable_if_t<is_totally_ordered_v<I>>>
 		[[nodiscard]]
 		constexpr bool
 		operator>=(const basic_reverse_iterator &other) {
-			return _i >= other._i;
+			return _i <= other._i;
 		}
 
 		constexpr basic_reverse_iterator &operator++() {
