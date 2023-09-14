@@ -532,6 +532,46 @@ namespace libstra {
 		operator->() const {
 			return _i;
 		}
+
+		template <class I = Iter,
+				  class = std::enable_if_t<_details::advanceable<I>::value>>
+		constexpr basic_const_iterator
+		operator+(iter_difference_t<Iter> n) const {
+			return _i + n;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<_details::advanceable<I>::value>>
+		constexpr basic_const_iterator
+		operator-(iter_difference_t<Iter> n) const {
+			return _i - n;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<_details::advanceable<I>::value>>
+		constexpr basic_const_iterator &operator-=(iter_difference_t<Iter> n) {
+			_i -= n;
+			return *this;
+		}
+		template <class I = Iter,
+				  class = std::enable_if_t<_details::advanceable<I>::value>>
+		constexpr basic_const_iterator &operator+=(iter_difference_t<Iter> n) {
+			_i += n;
+			return *this;
+		}
+
+		template <class I = Iter,
+				  class = std::enable_if_t<_details::advanceable<I>::value>>
+		constexpr iter_difference_t<Iter>
+		operator-(const basic_const_iterator &other) const {
+			return _i - other._i;
+		}
+
+		template <class I = Iter,
+				  class = std::enable_if_t<is_random_access_iterator_v<I>>>
+		[[nodiscard]]
+		constexpr basic_const_iterator::reference
+		operator[](iter_difference_t<Iter> n) const {
+			return _i[n];
+		}
 	};
 
 } // namespace libstra
