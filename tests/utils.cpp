@@ -91,6 +91,13 @@ int main(int argc, char const *argv[]) {
 		libstra::_details::advanceable<std::vector<int>::iterator>::value &&
 			libstra::_details::advanceable<const int *>::value,
 		"advanceable trait test failed");
+
+	{
+		constexpr libstra::basic_reverse_advanceable<int> i = 1;
+
+		static_assert(int(i + 1) == 0, "basic_reverse_advanceable test failed");
+		static_assert(i == 1, "basic_reverse_advanceable test failed");
+	}
 }
 
 template <class T, class = void>
