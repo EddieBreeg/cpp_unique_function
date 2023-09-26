@@ -267,7 +267,7 @@ namespace libstra {
 		template <class T>
 		struct inc_traits<
 			T, std::enable_if_t<std::is_integral<difference_type<T>>::value>> {
-			using difference_type = difference_type<T>;
+			using difference_type = _details::difference_type<T>;
 		};
 
 	} // namespace _details
