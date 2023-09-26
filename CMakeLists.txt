@@ -4,7 +4,7 @@ project(libstra VERSION 1.0.0)
 
 if(NOT ${MSVC})
     add_compile_options(-Wall)
-endif(${MSVC})
+endif(NOT ${MSVC})
 
 file(GLOB LIBSTRA_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
