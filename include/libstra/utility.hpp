@@ -468,8 +468,8 @@ namespace libstra {
 		template <class T, class First, class... Others>
 		struct is_one_of : bool_constant<std::is_same<T, First>::value ||
 										 is_one_of<T, Others...>::value> {};
-		template <class T, class... Others>
-		struct is_one_of<T, T, Others...> : std::true_type {};
+		// template <class T, class... Others>
+		// struct is_one_of<T, T, Others...> : std::true_type {};
 
 		template <class T, class U>
 		struct is_one_of<T, U> : bool_constant<std::is_same<T, U>::value> {};
