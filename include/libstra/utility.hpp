@@ -547,11 +547,6 @@ namespace libstra {
 	static constexpr bool is_decrementable_v =
 		_details::decrementable<T>::value;
 
-	template <class T>
-	struct type_identity {
-		using type = T;
-	};
-
 	template <class Adv>
 	class basic_reverse_advanceable {
 		Adv _val{};
